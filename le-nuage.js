@@ -27,6 +27,16 @@ const PALETTE = {
   encre: "#33414F",
 }
 
+// Apparence : "auto" suit le réglage iOS clair/sombre ; "sombre"/"clair" forcent.
+// La nuit météo (is_day = 0) force toujours le sombre.
+const THEME = "auto"
+
+function teinte(claire, sombre) {
+  if (THEME === "sombre") return new Color(sombre)
+  if (THEME === "clair") return new Color(claire)
+  return Color.dynamic(new Color(claire), new Color(sombre))
+}
+
 // ---------- Banque de répliques ----------
 // {TEMP} est remplacé par la température courante arrondie.
 const REPLIQUES = {
@@ -205,21 +215,44 @@ function groupeReplique(code) {
   return "clouds"
 }
 
-// Libellé + emoji pour la vue app (le widget, lui, utilise les images du nuage)
+// Libellé + icône SVG pour la vue app (le widget, lui, utilise les images du nuage)
 function infoWMO(code, isDay) {
   const nuit = isDay === 0
-  if (code === 0) return { label: "Ciel clair", emoji: nuit ? "🌙" : "☀️" }
-  if (code === 1) return { label: "Plutôt dégagé", emoji: nuit ? "🌙" : "🌤️" }
-  if (code === 2) return { label: "Partiellement nuageux", emoji: "⛅" }
-  if (code === 3) return { label: "Couvert", emoji: "☁️" }
-  if (code === 45 || code === 48) return { label: "Brouillard", emoji: "🌫️" }
-  if (code >= 51 && code <= 57) return { label: "Bruine", emoji: "🌦️" }
-  if (code >= 61 && code <= 67) return { label: "Pluie", emoji: "🌧️" }
-  if (code >= 71 && code <= 77) return { label: "Neige", emoji: "🌨️" }
-  if (code >= 80 && code <= 82) return { label: "Averses", emoji: "🌧️" }
-  if (code === 85 || code === 86) return { label: "Averses de neige", emoji: "🌨️" }
-  if (code >= 95) return { label: "Orage", emoji: "⛈️" }
-  return { label: "Variable", emoji: "🌥️" }
+  if (code === 0) return { label: "Ciel clair", icone: nuit ? "lune" : "soleil" }
+  if (code === 1) return { label: "Plutôt dégagé", icone: nuit ? "lune" : "soleil" }
+  if (code === 2) return { label: "Partiellement nuageux", icone: nuit ? "lune-nuage" : "soleil-nuage" }
+  if (code === 3) return { label: "Couvert", icone: "nuage" }
+  if (code === 45 || code === 48) return { label: "Brouillard", icone: "brouillard" }
+  if (code >= 51 && code <= 57) return { label: "Bruine", icone: "bruine" }
+  if (code >= 61 && code <= 67) return { label: "Pluie", icone: "pluie" }
+  if (code >= 71 && code <= 77) return { label: "Neige", icone: "neige" }
+  if (code >= 80 && code <= 82) return { label: "Averses", icone: "pluie" }
+  if (code === 85 || code === 86) return { label: "Averses de neige", icone: "neige" }
+  if (code >= 95) return { label: "Orage", icone: "orage" }
+  return { label: "Variable", icone: "nuage" }
+}
+
+// ---------- Icônes SVG (trait arrondi, currentColor → suivent le thème) ----------
+function svgIcone(nom, taille = 24) {
+  const NUAGE = '<path d="M7 18h10a4 4 0 0 0 .75-7.93A6 6 0 0 0 6.2 9.4 3.9 3.9 0 0 0 7 18Z"/>'
+  const NUAGE_HAUT = '<g transform="translate(0 -2.6)">' + NUAGE + "</g>"
+  const ICONES = {
+    soleil: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.8v2.2M12 19v2.2M2.8 12H5M19 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/>',
+    lune: '<path d="M20.4 13.2A8.5 8.5 0 1 1 10.8 3.6a6.8 6.8 0 0 0 9.6 9.6Z"/>',
+    "soleil-nuage": '<circle cx="7.6" cy="6.8" r="2.5"/><path d="M7.6 2.6v1.3M3.4 6.8h1.3M4.6 3.8l.9.9M10.6 3.8l-.9.9"/><path d="M10 19.5h7a3.4 3.4 0 0 0 .64-6.74A5 5 0 0 0 9.3 11.7 3.3 3.3 0 0 0 10 19.5Z"/>',
+    "lune-nuage": '<path d="M12.3 7.4A4.3 4.3 0 1 1 7.3 2.4a3.4 3.4 0 0 0 5 5Z"/><path d="M10 19.5h7a3.4 3.4 0 0 0 .64-6.74A5 5 0 0 0 9.3 11.7 3.3 3.3 0 0 0 10 19.5Z"/>',
+    nuage: NUAGE,
+    brouillard: NUAGE_HAUT + '<path d="M6 19h12M8 21.6h8"/>',
+    bruine: NUAGE_HAUT + '<path d="M9.5 18.6v2M13 19.6v2M16.5 18.6v2"/>',
+    pluie: NUAGE_HAUT + '<path d="M9.8 18.6l-1.1 2.8M13.4 18.6l-1.1 2.8M17 18.6l-1.1 2.8"/>',
+    neige: NUAGE_HAUT + '<g fill="currentColor" stroke="none"><circle cx="9.5" cy="19.6" r="1"/><circle cx="13.2" cy="21" r="1"/><circle cx="16.6" cy="19.3" r="1"/></g>',
+    orage: NUAGE_HAUT + '<path d="M13.2 16.8l-2.6 3.7h2l-1.1 3.3 3.7-4.6h-2.1l1.5-2.4Z" fill="currentColor" stroke="none"/>',
+    goutte: '<path d="M12 4.8C9.2 9 7.4 11.5 7.4 14a4.6 4.6 0 0 0 9.2 0C16.6 11.5 14.8 9 12 4.8Z"/>',
+    vent: '<path d="M3.5 8.8h9.7a2.5 2.5 0 1 0-2.5-2.5M3.5 13.6h13.6a2.7 2.7 0 1 1-2.7 2.7"/>',
+    lever: '<path d="M4 18h16M8 18a4 4 0 0 1 8 0M12 11.6V7.2M10 9l2-2 2 2"/>',
+    coucher: '<path d="M4 18h16M8 18a4 4 0 0 1 8 0M12 7.2v4.4M10 9.8l2 2 2-2"/>',
+  }
+  return `<svg viewBox="0 0 24 24" width="${taille}" height="${taille}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONES[nom] || NUAGE}</svg>`
 }
 
 // ---------- Choix de la réplique ----------
@@ -499,7 +532,7 @@ async function buildWidget(data) {
   // suit le mode sombre iOS ; la nuit force le sombre quoi qu'il arrive
   const encre = nuit
     ? new Color(PALETTE.corps)
-    : Color.dynamic(new Color(PALETTE.encre), new Color(PALETTE.corps))
+    : teinte(PALETTE.encre, PALETTE.corps)
 
   const w = new ListWidget()
   w.setPadding(14, 16, 12, 16)
@@ -508,8 +541,7 @@ async function buildWidget(data) {
   const grad = new LinearGradient()
   grad.colors = nuit
     ? [new Color("#2B3A4E"), new Color("#1E2935")]
-    : [Color.dynamic(new Color("#DCEBFA"), new Color("#2B3A4E")),
-       Color.dynamic(new Color("#F7FBFF"), new Color("#1E2935"))]
+    : [teinte("#DCEBFA", "#2B3A4E"), teinte("#F7FBFF", "#1E2935")]
   grad.locations = [0, 1]
   w.backgroundGradient = grad
 
@@ -527,14 +559,23 @@ async function buildWidget(data) {
   const infos = haut.addStack()
   infos.layoutVertically()
 
+  const tLabel = infos.addText(infoWMO(c.weather_code, c.is_day).label)
+  tLabel.font = Font.mediumRoundedSystemFont(11)
+  tLabel.textColor = encre
+  tLabel.textOpacity = 0.6
+  tLabel.lineLimit = 1
+
   const tTemp = infos.addText(`${Math.round(c.temperature_2m)}°`)
-  tTemp.font = Font.boldRoundedSystemFont(36)
+  tTemp.font = Font.boldRoundedSystemFont(34)
   tTemp.textColor = encre
 
-  const tMinMax = infos.addText(`↓ ${Math.round(data.daily.temperature_2m_min[0])}°   ↑ ${Math.round(data.daily.temperature_2m_max[0])}°`)
-  tMinMax.font = Font.mediumRoundedSystemFont(13)
+  // min/max + ressenti sur une seule ligne : aucun risque d'écrêtage vertical
+  const tMinMax = infos.addText(`↓ ${Math.round(data.daily.temperature_2m_min[0])}°  ↑ ${Math.round(data.daily.temperature_2m_max[0])}°  ·  Ress. ${Math.round(c.apparent_temperature)}°`)
+  tMinMax.font = Font.mediumRoundedSystemFont(12)
   tMinMax.textColor = encre
   tMinMax.textOpacity = 0.75
+  tMinMax.lineLimit = 1
+  tMinMax.minimumScaleFactor = 0.8
 
   const pluie = pluieDansLHeure(data)
   if (pluie) {
@@ -566,7 +607,7 @@ async function buildWidget(data) {
 function widgetErreur() {
   const w = new ListWidget()
   w.setPadding(14, 16, 12, 16)
-  w.backgroundColor = Color.dynamic(new Color("#D8E5F2"), new Color("#2B3A4E"))
+  w.backgroundColor = teinte("#D8E5F2", "#2B3A4E")
   const haut = w.addStack()
   haut.layoutHorizontally()
   haut.centerAlignContent()
@@ -575,14 +616,14 @@ function widgetErreur() {
   haut.addSpacer(14)
   const t = haut.addText("Le wifi des nuages est en rade. Réessaie dans un moment.")
   t.font = Font.italicSystemFont(13)
-  t.textColor = Color.dynamic(new Color(PALETTE.encre), new Color(PALETTE.corps))
+  t.textColor = teinte(PALETTE.encre, PALETTE.corps)
   w.refreshAfterDate = new Date(Date.now() + 10 * 60 * 1000)
   return w
 }
 
 // ============================================================
 // MODE APP — WebView HTML (semaine, ressenti, détail horaire)
-// Thème : suit prefers-color-scheme ; la nuit force le sombre.
+// Thème : suit THEME/prefers-color-scheme ; la nuit force le sombre.
 // ============================================================
 async function buildHTML(data) {
   const c = data.current
@@ -610,10 +651,10 @@ async function buildHTML(data) {
     for (let i = depart; i < Math.min(depart + 12, data.hourly.time.length); i++) {
       const d = new Date(data.hourly.time[i])
       const h = i === depart ? "Maint." : `${d.getHours()} h`
-      const e = infoWMO(data.hourly.weather_code[i], (d.getHours() >= 21 || d.getHours() <= 6) ? 0 : 1).emoji
+      const ico = infoWMO(data.hourly.weather_code[i], (d.getHours() >= 21 || d.getHours() <= 6) ? 0 : 1).icone
       const proba = data.hourly.precipitation_probability ? data.hourly.precipitation_probability[i] : 0
       const probaHTML = proba >= 30 ? `<div class="h-pluie">${proba} %</div>` : `<div class="h-pluie">&nbsp;</div>`
-      heuresHTML += `<div class="heure"><div class="h-label">${h}</div><div class="h-emoji">${e}</div><div class="h-temp">${Math.round(data.hourly.temperature_2m[i])}°</div>${probaHTML}</div>`
+      heuresHTML += `<div class="heure"><div class="h-label">${h}</div><div class="h-ico">${svgIcone(ico, 26)}</div><div class="h-temp">${Math.round(data.hourly.temperature_2m[i])}°</div>${probaHTML}</div>`
     }
   }
 
@@ -622,45 +663,46 @@ async function buildHTML(data) {
   for (let i = 0; i < data.daily.time.length; i++) {
     const d = new Date(data.daily.time[i])
     const nom = i === 0 ? "Aujourd'hui" : JOURS[d.getDay()] + " " + d.getDate()
-    const e = infoWMO(data.daily.weather_code[i], 1).emoji
+    const ico = infoWMO(data.daily.weather_code[i], 1).icone
     const proba = data.daily.precipitation_probability_max ? data.daily.precipitation_probability_max[i] : null
-    const probaHTML = proba !== null && proba >= 20 ? `<span class="j-pluie">💧 ${proba} %</span>` : `<span class="j-pluie"></span>`
-    joursHTML += `<div class="jour"><span class="j-nom">${nom}</span>${probaHTML}<span class="j-emoji">${e}</span><span class="j-temps"><span class="j-min">${Math.round(data.daily.temperature_2m_min[i])}°</span> / <span class="j-max">${Math.round(data.daily.temperature_2m_max[i])}°</span></span></div>`
+    const probaHTML = proba !== null && proba >= 20
+      ? `<span class="j-pluie">${svgIcone("goutte", 12)} ${proba} %</span>`
+      : `<span class="j-pluie"></span>`
+    joursHTML += `<div class="jour"><span class="j-nom">${nom}</span>${probaHTML}<span class="j-ico">${svgIcone(ico, 22)}</span><span class="j-temps"><span class="j-min">${Math.round(data.daily.temperature_2m_min[i])}°</span> / <span class="j-max">${Math.round(data.daily.temperature_2m_max[i])}°</span></span></div>`
   }
 
-  // la nuit, on force le thème sombre quel que soit le réglage système
-  const forceSombre = nuit ? `:root { --fond-haut:#2B3A4E; --fond-bas:#1E2935; --texte:${PALETTE.corps}; --carte:rgba(234,241,249,.06); --bulle:rgba(234,241,249,.08); --separateur:rgba(234,241,249,.12); }` : ""
+  // thème forcé : nuit → sombre ; sinon selon THEME
+  const VARS_SOMBRES = `--fond-haut:#2B3A4E; --fond-bas:#1E2935; --texte:${PALETTE.corps}; --carte:rgba(234,241,249,.06); --bulle:rgba(234,241,249,.08); --separateur:rgba(234,241,249,.12);`
+  const VARS_CLAIRES = `--fond-haut:#DCEBFA; --fond-bas:#F7FBFF; --texte:${PALETTE.encre}; --carte:rgba(255,255,255,.7); --bulle:rgba(255,255,255,.65); --separateur:${PALETTE.ombre};`
+  let themeForce = ""
+  if (nuit || THEME === "sombre") themeForce = `:root { ${VARS_SOMBRES} }`
+  else if (THEME === "clair") themeForce = `:root { ${VARS_CLAIRES} }`
 
   return `<!DOCTYPE html>
 <html lang="fr"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>
-  :root {
-    --fond-haut: #DCEBFA; --fond-bas: #F7FBFF;
-    --texte: ${PALETTE.encre};
-    --carte: rgba(255,255,255,.7);
-    --bulle: rgba(255,255,255,.65);
-    --separateur: ${PALETTE.ombre};
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --fond-haut: #2B3A4E; --fond-bas: #1E2935;
-      --texte: ${PALETTE.corps};
-      --carte: rgba(234,241,249,.06);
-      --bulle: rgba(234,241,249,.08);
-      --separateur: rgba(234,241,249,.12);
-    }
-  }
-  ${forceSombre}
+  :root { ${VARS_CLAIRES} }
+  @media (prefers-color-scheme: dark) { :root { ${VARS_SOMBRES} } }
+  ${themeForce}
   * { box-sizing: border-box; margin: 0; }
+  /* fond : couleur unie sur <html> (c'est elle que WKWebView peint au rebond)
+     + calque fixe surdimensionné pour le dégradé (background-attachment: fixed est cassé sur iOS) */
+  html { background-color: var(--fond-bas); min-height: 100%; }
   body {
     font-family: -apple-system, "SF Pro Rounded", sans-serif;
-    background: linear-gradient(var(--fond-haut), var(--fond-bas)) fixed;
+    background: transparent;
     color: var(--texte);
     min-height: 100vh;
-    padding: 28px 18px calc(28px + env(safe-area-inset-bottom));
+    padding: calc(34px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom));
   }
+  .fond {
+    position: fixed; left: 0; right: 0; top: -100vh; height: 300vh;
+    z-index: -1; pointer-events: none;
+    background: linear-gradient(var(--fond-haut) 33%, var(--fond-bas) 67%);
+  }
+  svg { display: inline-block; vertical-align: middle; }
   .header { text-align: center; }
   .nuage-scene { animation: flotte 4.5s ease-in-out infinite alternate; }
   .nuage {
@@ -681,7 +723,11 @@ async function buildHTML(data) {
   .label { font-size: 17px; font-weight: 600; opacity: .85; }
   .ressenti { font-size: 14px; opacity: .65; margin-top: 2px; }
   .infos { display: flex; justify-content: center; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
-  .chip { background: var(--bulle); border-radius: 14px; padding: 6px 12px; font-size: 13px; font-weight: 600; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--bulle); border-radius: 14px; padding: 6px 12px;
+    font-size: 13px; font-weight: 600;
+  }
   .vanne {
     margin: 16px auto 0; max-width: 320px;
     font-style: italic; font-size: 15px; line-height: 1.4; text-align: center;
@@ -697,28 +743,32 @@ async function buildHTML(data) {
   .heures { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
   .heure { min-width: 54px; text-align: center; }
   .h-label { font-size: 12px; opacity: .6; }
-  .h-emoji { font-size: 24px; margin: 4px 0; }
+  .h-ico { margin: 4px 0; opacity: .9; }
   .h-temp { font-size: 15px; font-weight: 700; }
   .h-pluie { font-size: 11px; opacity: .65; margin-top: 2px; }
   .jour { display: flex; align-items: center; padding: 9px 2px; border-bottom: 1px solid var(--separateur); }
   .jour:last-child { border-bottom: none; }
   .j-nom { flex: 1; font-weight: 600; font-size: 15px; }
-  .j-pluie { width: 70px; text-align: right; font-size: 12px; opacity: .6; }
-  .j-emoji { width: 44px; text-align: center; font-size: 22px; }
+  .j-pluie {
+    display: inline-flex; align-items: center; justify-content: flex-end; gap: 3px;
+    width: 74px; font-size: 12px; opacity: .6;
+  }
+  .j-ico { width: 44px; display: flex; justify-content: center; opacity: .9; }
   .j-temps { width: 84px; text-align: right; font-size: 15px; font-variant-numeric: tabular-nums; }
   .j-min { opacity: .55; }
   .j-max { font-weight: 700; }
 </style></head>
 <body>
+  <div class="fond"></div>
   <div class="header">
     <div class="nuage-scene"><img id="nuage" class="nuage" src="data:image/png;base64,${nuageB64}" alt="${info.label}"></div>
     <div class="temp">${Math.round(c.temperature_2m)}°</div>
     <div class="label">${info.label}</div>
     <div class="ressenti">Ressenti ${Math.round(c.apparent_temperature)}°</div>
     <div class="infos">
-      <span class="chip">💨 ${vent} km/h</span>
-      <span class="chip">🌅 ${lever}</span>
-      <span class="chip">🌇 ${coucher}</span>
+      <span class="chip">${svgIcone("vent", 16)} ${vent} km/h</span>
+      <span class="chip">${svgIcone("lever", 16)} ${lever}</span>
+      <span class="chip">${svgIcone("coucher", 16)} ${coucher}</span>
     </div>
   </div>
   <div class="vanne" id="vanne">« ${replique} »</div>
