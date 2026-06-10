@@ -84,6 +84,12 @@ python3 gen_nuage.py        # produit les SVG
 
 Palette : corps `#EAF1F9` · ombre `#D8E5F2` · joues `#F4B8BE` · traits `#33414F`.
 
+## Licence
+
+- **Code** (`le-nuage.js`, `gen_nuage.py`) : [MIT](LICENSE) — utilisez, modifiez, partagez.
+- **Le Nuage et ses visuels** (`png/`, `svg/`) : [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.fr) —
+  réutilisation avec crédit, pas d'usage commercial. Le personnage reste © Jérôme Dubos.
+
 ## Notes
 
 - Le rafraîchissement du widget est décidé par iOS (~15–30 min), comme pour
