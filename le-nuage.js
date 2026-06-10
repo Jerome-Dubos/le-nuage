@@ -5,11 +5,6 @@
 // Un seul script, deux modes :
 //   - sur l'écran d'accueil (widget moyen) → vue compacte
 //   - tapé / ouvert dans Scriptable → "vraie app" en WebView HTML
-//
-// Assets : dépose les PNG dans iCloud Drive/Scriptable/nuage/
-// (radieux.png, detendu.png, endormi.png, ronchon.png, blase.png,
-//  emmitoufle.png, flippe.png + variantes *_nuit.png).
-// Tant qu'ils n'existent pas, le nuage est dessiné en DrawContext.
 // ============================================================
 
 // ---------- Config ----------
@@ -320,7 +315,7 @@ function pluieDansLHeure(data) {
 // ---------- Localisation : GPS, repli Schiltigheim ----------
 async function getCoords() {
   try {
-    Location.setAccuracyToKilometer() // suffisant pour la météo, plus rapide
+    Location.setAccuracyToKilometer() 
     const loc = await Location.current()
     return { latitude: loc.latitude, longitude: loc.longitude }
   } catch (e) {
@@ -485,7 +480,7 @@ function dessineNuage(etat, nuit) {
 async function imageNuage(etat, nuit) {
   const candidats = nuit ? [`${etat}_nuit.png`, `${etat}.png`] : [`${etat}.png`]
 
-  // 1) dossier iCloud (si l'espace iCloud le permet un jour, il reprend la main)
+  // 1) dossier iCloud (si l'espace iCloud le permet, il reprend la main)
   try {
     const fm = FileManager.iCloud()
     const dir = fm.joinPath(fm.documentsDirectory(), DOSSIER_ASSETS)
