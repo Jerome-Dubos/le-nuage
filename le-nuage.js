@@ -300,10 +300,10 @@ async function getMeteo(coords) {
   const params = [
     `latitude=${coords.latitude.toFixed(4)}`,
     `longitude=${coords.longitude.toFixed(4)}`,
-    "current=temperature_2m,apparent_temperature,weather_code,is_day,precipitation",
+    "current=temperature_2m,apparent_temperature,weather_code,is_day,precipitation,wind_speed_10m",
     "minutely_15=precipitation",
-    "daily=temperature_2m_max,temperature_2m_min,weather_code",
-    "hourly=temperature_2m,weather_code",
+    "daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,sunrise,sunset",
+    "hourly=temperature_2m,weather_code,precipitation_probability",
     "forecast_days=7",
     "timezone=auto",
   ].join("&")
@@ -496,7 +496,10 @@ async function imageNuage(etat, nuit) {
 async function buildWidget(data) {
   const c = data.current
   const nuit = c.is_day === 0
-  const encre = nuit ? new Color(PALETTE.corps) : new Color(PALETTE.encre)
+  // suit le mode sombre iOS ; la nuit force le sombre quoi qu'il arrive
+  const encre = nuit
+    ? new Color(PALETTE.corps)
+    : Color.dynamic(new Color(PALETTE.encre), new Color(PALETTE.corps))
 
   const w = new ListWidget()
   w.setPadding(14, 16, 12, 16)
@@ -505,7 +508,8 @@ async function buildWidget(data) {
   const grad = new LinearGradient()
   grad.colors = nuit
     ? [new Color("#2B3A4E"), new Color("#1E2935")]
-    : [new Color("#DCEBFA"), new Color("#F7FBFF")]
+    : [Color.dynamic(new Color("#DCEBFA"), new Color("#2B3A4E")),
+       Color.dynamic(new Color("#F7FBFF"), new Color("#1E2935"))]
   grad.locations = [0, 1]
   w.backgroundGradient = grad
 
@@ -562,7 +566,7 @@ async function buildWidget(data) {
 function widgetErreur() {
   const w = new ListWidget()
   w.setPadding(14, 16, 12, 16)
-  w.backgroundColor = new Color("#D8E5F2")
+  w.backgroundColor = Color.dynamic(new Color("#D8E5F2"), new Color("#2B3A4E"))
   const haut = w.addStack()
   haut.layoutHorizontally()
   haut.centerAlignContent()
@@ -571,13 +575,14 @@ function widgetErreur() {
   haut.addSpacer(14)
   const t = haut.addText("Le wifi des nuages est en rade. Réessaie dans un moment.")
   t.font = Font.italicSystemFont(13)
-  t.textColor = new Color(PALETTE.encre)
+  t.textColor = Color.dynamic(new Color(PALETTE.encre), new Color(PALETTE.corps))
   w.refreshAfterDate = new Date(Date.now() + 10 * 60 * 1000)
   return w
 }
 
 // ============================================================
 // MODE APP — WebView HTML (semaine, ressenti, détail horaire)
+// Thème : suit prefers-color-scheme ; la nuit force le sombre.
 // ============================================================
 async function buildHTML(data) {
   const c = data.current
@@ -592,7 +597,12 @@ async function buildHTML(data) {
   // pool de vannes embarqué : taper sur le nuage en sert une nouvelle
   const vannes = poolRepliques(data).map(r => remplaceTemp(r, data))
 
-  // prochaines 12 heures
+  // pastilles d'infos du moment
+  const vent = Math.round(c.wind_speed_10m || 0)
+  const lever = (data.daily.sunrise && data.daily.sunrise[0] || "").slice(11, 16)
+  const coucher = (data.daily.sunset && data.daily.sunset[0] || "").slice(11, 16)
+
+  // prochaines 12 heures, proba de pluie affichée à partir de 30 %
   const maintenant = Date.now()
   const depart = data.hourly.time.findIndex(t => new Date(t).getTime() > maintenant - 3600 * 1000)
   let heuresHTML = ""
@@ -601,18 +611,25 @@ async function buildHTML(data) {
       const d = new Date(data.hourly.time[i])
       const h = i === depart ? "Maint." : `${d.getHours()} h`
       const e = infoWMO(data.hourly.weather_code[i], (d.getHours() >= 21 || d.getHours() <= 6) ? 0 : 1).emoji
-      heuresHTML += `<div class="heure"><div class="h-label">${h}</div><div class="h-emoji">${e}</div><div class="h-temp">${Math.round(data.hourly.temperature_2m[i])}°</div></div>`
+      const proba = data.hourly.precipitation_probability ? data.hourly.precipitation_probability[i] : 0
+      const probaHTML = proba >= 30 ? `<div class="h-pluie">${proba} %</div>` : `<div class="h-pluie">&nbsp;</div>`
+      heuresHTML += `<div class="heure"><div class="h-label">${h}</div><div class="h-emoji">${e}</div><div class="h-temp">${Math.round(data.hourly.temperature_2m[i])}°</div>${probaHTML}</div>`
     }
   }
 
-  // 7 jours
+  // 7 jours, avec la proba de pluie max du jour à partir de 20 %
   let joursHTML = ""
   for (let i = 0; i < data.daily.time.length; i++) {
     const d = new Date(data.daily.time[i])
     const nom = i === 0 ? "Aujourd'hui" : JOURS[d.getDay()] + " " + d.getDate()
     const e = infoWMO(data.daily.weather_code[i], 1).emoji
-    joursHTML += `<div class="jour"><span class="j-nom">${nom}</span><span class="j-emoji">${e}</span><span class="j-temps"><span class="j-min">${Math.round(data.daily.temperature_2m_min[i])}°</span> / <span class="j-max">${Math.round(data.daily.temperature_2m_max[i])}°</span></span></div>`
+    const proba = data.daily.precipitation_probability_max ? data.daily.precipitation_probability_max[i] : null
+    const probaHTML = proba !== null && proba >= 20 ? `<span class="j-pluie">💧 ${proba} %</span>` : `<span class="j-pluie"></span>`
+    joursHTML += `<div class="jour"><span class="j-nom">${nom}</span>${probaHTML}<span class="j-emoji">${e}</span><span class="j-temps"><span class="j-min">${Math.round(data.daily.temperature_2m_min[i])}°</span> / <span class="j-max">${Math.round(data.daily.temperature_2m_max[i])}°</span></span></div>`
   }
+
+  // la nuit, on force le thème sombre quel que soit le réglage système
+  const forceSombre = nuit ? `:root { --fond-haut:#2B3A4E; --fond-bas:#1E2935; --texte:${PALETTE.corps}; --carte:rgba(234,241,249,.06); --bulle:rgba(234,241,249,.08); --separateur:rgba(234,241,249,.12); }` : ""
 
   return `<!DOCTYPE html>
 <html lang="fr"><head>
@@ -620,14 +637,27 @@ async function buildHTML(data) {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>
   :root {
-    --corps: ${PALETTE.corps}; --ombre: ${PALETTE.ombre};
-    --joues: ${PALETTE.joues}; --encre: ${PALETTE.encre};
+    --fond-haut: #DCEBFA; --fond-bas: #F7FBFF;
+    --texte: ${PALETTE.encre};
+    --carte: rgba(255,255,255,.7);
+    --bulle: rgba(255,255,255,.65);
+    --separateur: ${PALETTE.ombre};
   }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fond-haut: #2B3A4E; --fond-bas: #1E2935;
+      --texte: ${PALETTE.corps};
+      --carte: rgba(234,241,249,.06);
+      --bulle: rgba(234,241,249,.08);
+      --separateur: rgba(234,241,249,.12);
+    }
+  }
+  ${forceSombre}
   * { box-sizing: border-box; margin: 0; }
   body {
     font-family: -apple-system, "SF Pro Rounded", sans-serif;
-    background: ${nuit ? "linear-gradient(#2B3A4E, #1E2935)" : "linear-gradient(#DCEBFA, #F7FBFF)"};
-    color: ${nuit ? "var(--corps)" : "var(--encre)"};
+    background: linear-gradient(var(--fond-haut), var(--fond-bas)) fixed;
+    color: var(--texte);
     min-height: 100vh;
     padding: 28px 18px calc(28px + env(safe-area-inset-bottom));
   }
@@ -650,14 +680,16 @@ async function buildHTML(data) {
   .temp { font-size: 64px; font-weight: 800; letter-spacing: -2px; }
   .label { font-size: 17px; font-weight: 600; opacity: .85; }
   .ressenti { font-size: 14px; opacity: .65; margin-top: 2px; }
+  .infos { display: flex; justify-content: center; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .chip { background: var(--bulle); border-radius: 14px; padding: 6px 12px; font-size: 13px; font-weight: 600; }
   .vanne {
-    margin: 18px auto 0; max-width: 320px;
+    margin: 16px auto 0; max-width: 320px;
     font-style: italic; font-size: 15px; line-height: 1.4; text-align: center;
-    background: ${nuit ? "rgba(234,241,249,.08)" : "rgba(255,255,255,.65)"};
+    background: var(--bulle);
     border-radius: 20px; padding: 12px 16px;
   }
   .card {
-    background: ${nuit ? "rgba(234,241,249,.06)" : "rgba(255,255,255,.7)"};
+    background: var(--carte);
     border-radius: 24px; padding: 16px; margin-top: 16px;
     box-shadow: 0 6px 18px rgba(51,65,79,.07);
   }
@@ -667,9 +699,11 @@ async function buildHTML(data) {
   .h-label { font-size: 12px; opacity: .6; }
   .h-emoji { font-size: 24px; margin: 4px 0; }
   .h-temp { font-size: 15px; font-weight: 700; }
-  .jour { display: flex; align-items: center; padding: 9px 2px; border-bottom: 1px solid ${nuit ? "rgba(234,241,249,.12)" : "var(--ombre)"}; }
+  .h-pluie { font-size: 11px; opacity: .65; margin-top: 2px; }
+  .jour { display: flex; align-items: center; padding: 9px 2px; border-bottom: 1px solid var(--separateur); }
   .jour:last-child { border-bottom: none; }
   .j-nom { flex: 1; font-weight: 600; font-size: 15px; }
+  .j-pluie { width: 70px; text-align: right; font-size: 12px; opacity: .6; }
   .j-emoji { width: 44px; text-align: center; font-size: 22px; }
   .j-temps { width: 84px; text-align: right; font-size: 15px; font-variant-numeric: tabular-nums; }
   .j-min { opacity: .55; }
@@ -681,6 +715,11 @@ async function buildHTML(data) {
     <div class="temp">${Math.round(c.temperature_2m)}°</div>
     <div class="label">${info.label}</div>
     <div class="ressenti">Ressenti ${Math.round(c.apparent_temperature)}°</div>
+    <div class="infos">
+      <span class="chip">💨 ${vent} km/h</span>
+      <span class="chip">🌅 ${lever}</span>
+      <span class="chip">🌇 ${coucher}</span>
+    </div>
   </div>
   <div class="vanne" id="vanne">« ${replique} »</div>
   <div class="card"><h2>Prochaines heures</h2><div class="heures">${heuresHTML}</div></div>
