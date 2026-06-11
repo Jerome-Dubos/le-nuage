@@ -140,10 +140,7 @@ def etoile(x, y, s, couleur=None):
             f'Q {x+s*0.22} {y+s*0.22} {x} {y+s} Q {x-s*0.22} {y+s*0.22} {x-s} {y} '
             f'Q {x-s*0.22} {y-s*0.22} {x} {y-s} Z" fill="{couleur}" opacity="0.95"/>')
 
-ETOILES = etoile(96, 96, 11, OR) + etoile(434, 72, 8, OR) + etoile(458, 156, 6, OR)
-PAILLETTES = etoile(88, 148, 7, OR) + etoile(424, 122, 6, OR) + etoile(112, 78, 5, OR)
-COEUR = (f'<path d="M 426 96 C 420 87 408 91 410 101 C 411 108 418 113 426 120 '
-         f'C 434 113 441 108 442 101 C 444 91 432 87 426 96 Z" fill="{JOUES}"/>')
+ETOILES = etoile(98, 92, 9, OR) + etoile(436, 120, 7, OR)  # 2 étoiles sobres
 
 # --- états : (yeux jour, bouche, sourcils, accessoires fixes, interjection nuit-adaptative) ---
 ETATS = {
@@ -165,10 +162,6 @@ def svg_nuage(nom, nuit=False):
         if nom not in GARDENT_LEURS_YEUX:
             yeux = yeux_miclos()
         acc += ETOILES
-    else:
-        acc += PAILLETTES
-        if nom in ("radieux", "detendu"):
-            acc += COEUR
     if interj:
         acc = interj(CORPS if nuit else ENCRE) + acc
     return (
@@ -184,4 +177,4 @@ for nom in ETATS:
         with open(os.path.join(OUT_SVG, fichier), "w") as f:
             f.write(svg_nuage(nom, nuit))
 
-print(f"{len(ETATS) * 2} SVG doux générés")
+print(f"{len(ETATS) * 2} SVG doux épurés générés")
