@@ -1,5 +1,6 @@
 # Xcode / build — le .xcodeproj est régénéré par `xcodegen generate`
 *.xcodeproj
+*.ipa
 DerivedData/
 build/
 *.xcuserstate
