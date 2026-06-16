@@ -1,0 +1,13 @@
+# Xcode / build — le .xcodeproj est régénéré par `xcodegen generate`
+*.xcodeproj
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+
+# Profilage / divers
+*.profraw
+.DS_Store
+
+# Outils internes (planification GSD)
+.planning/

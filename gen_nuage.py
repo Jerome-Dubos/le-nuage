@@ -165,7 +165,7 @@ def svg_nuage(nom, nuit=False):
     return (
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 400">'
         f'<defs><clipPath id="corps">{formes_corps()}</clipPath></defs>'
-        f'{base_nuage(nuit)}{sourcils}{yeux}{bouche}{acc}'
+        f'{base_nuage(nuit)}{sourcils}<g class="yeux">{yeux}</g>{bouche}{acc}'
         '</svg>'
     )
 
