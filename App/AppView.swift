@@ -71,15 +71,20 @@ struct AppView: View {
         Button {
             openURL(info.installUrl)
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: 9) {
                 Image(systemName: "arrow.down.circle.fill")
+                    .font(.system(size: 17, weight: .semibold))
                 Text("Mise à jour dispo — v\(info.version)")
-                    .font(.footnote.weight(.semibold))
+                    .font(.subheadline.weight(.semibold))
                 Spacer(minLength: 0)
-                Text("Installer").font(.caption.weight(.bold))
+                Text("Installer")
+                    .font(.footnote.weight(.bold))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.primary.opacity(0.12), in: Capsule())
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
             .background(.ultraThinMaterial, in: Capsule())
         }
         .tint(.primary)
