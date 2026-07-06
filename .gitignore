@@ -12,3 +12,6 @@ xcuserdata/
 
 # Outils internes (planification GSD)
 .planning/
+
+# Feuille de route détaillée — notes perso, on ne publie que le teaser du README
+ROADMAP.local.md

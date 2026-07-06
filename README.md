@@ -105,6 +105,19 @@ Tout se configure dans l'app (bouton réglages en haut à droite) :
 | **Dates spéciales** | liste nom + jour/mois, récurrence annuelle automatique |
 | **Lieux** (bouton **+**) | recherche d'une ville à ajouter ; le GPS reste la 1ʳᵉ page |
 
+## 🌤️ Et demain ?
+
+Le nuage ne compte pas rester sur un seul écran. Doucement, il aimerait s'installer un
+peu partout dans ta vie :
+
+- ⌚ **au poignet**, sur l'Apple Watch, sa vanne à portée de regard ;
+- 🔲 **en plein d'autres formats** — petits widgets, écran verrouillé, mode veille ;
+- 🗣️ **quand tu l'appelles**, d'un « dis, le nuage, il dit quoi ? » ;
+- 🇬🇧 **dans d'autres langues**, pour taquiner plus de monde ;
+- 🤖 **sur Android**, en version toute douce — « mon p'tit nuage ».
+
+Rien n'est promis, tout est rêvé. *Il flotte, mais il a des projets.*
+
 ## Structure du repo
 
 App native SwiftUI (`App/`, `Shared/`, `Widget/`), assets nuage (`svg/`, `svg-doux/`,
