@@ -5,6 +5,7 @@ import SwiftUI
 // et plus parlant. Le ton est persisté dans l'App Group (app + widget suivent).
 struct ReglagesView: View {
     @Binding var ton: Ton
+    @Binding var live: Bool
     @Environment(\.dismiss) private var dismiss
     @State private var anniversaires = Reglages.anniversaires
 
@@ -20,6 +21,14 @@ struct ReglagesView: View {
                     }
                     .listRowInsets(EdgeInsets(top: 14, leading: 14, bottom: 14, trailing: 14))
                     .listRowBackground(Color.clear)
+                }
+
+                Section {
+                    Toggle("Afficher dans la Dynamic Island", isOn: $live)
+                } header: {
+                    Text("Dynamic Island")
+                } footer: {
+                    Text("Un aperçu météo vivant dans l'îlot dynamique et sur l'écran verrouillé, pour ta position actuelle.")
                 }
 
                 Section {
@@ -65,6 +74,7 @@ struct ReglagesView: View {
                 }
             }
             .onChange(of: anniversaires) { _, v in Reglages.anniversaires = v }
+            .onChange(of: live) { _, v in Reglages.liveActivite = v }
         }
     }
 

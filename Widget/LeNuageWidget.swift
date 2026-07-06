@@ -234,5 +234,6 @@ struct LeNuageWidget: Widget {
 struct LeNuageWidgetBundle: WidgetBundle {
     var body: some Widget {
         LeNuageWidget()
+        NuageLiveActivity()
     }
 }

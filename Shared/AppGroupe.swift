@@ -67,6 +67,12 @@ enum Reglages {
         }
     }
 
+    // Live Activity (Dynamic Island) activée ou non. Opt-in.
+    static var liveActivite: Bool {
+        get { AppGroupe.defaults.bool(forKey: "live-activite") }
+        set { AppGroupe.defaults.set(newValue, forKey: "live-activite") }
+    }
+
     // Lieux enregistrés (en plus de la position GPS). Partagés app ↔ widget.
     static var lieux: [Lieu] {
         get {

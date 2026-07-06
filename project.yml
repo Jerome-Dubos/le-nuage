@@ -47,6 +47,7 @@ targets:
       properties:
         CFBundleDisplayName: Le Nuage
         UILaunchScreen: {}
+        NSSupportsLiveActivities: true
         UIRequiresFullScreen: true
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
