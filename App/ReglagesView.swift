@@ -80,8 +80,8 @@ struct ReglagesView: View {
         }
     }
 
-    // Page de don. Remplacer par ta vraie page une fois le compte Ko-fi créé.
-    static let lienSoutien = "https://ko-fi.com/lenuage"
+    // Page de don Ko-fi (Stripe/PayPal, devise €). Reçoit les « cafés » de soutien.
+    static let lienSoutien = "https://ko-fi.com/duboswebservices"
 
     // Carte de soutien : pas de pub ni de traçage, juste un lien de don optionnel,
     // fidèle à la promesse « rien n'est envoyé ». Le visuel suit le ton choisi.
