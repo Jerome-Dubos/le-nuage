@@ -52,8 +52,10 @@ Aucune clé API : données d'[Open-Meteo](https://open-meteo.com/) (météo + re
 
 **Ce qu'il te faut**
 - Un **iPhone** (iOS 17 ou plus récent).
-- Un **identifiant Apple** — de préférence un compte « jetable » créé pour l'occasion,
-  jamais ton compte principal (l'app est signée avec, en local, rien n'est envoyé).
+- Un **identifiant Apple**. Ton compte habituel convient très bien : il sert seulement à
+  « signer » l'app sur ton téléphone, **rien ne m'est envoyé** et Le Nuage ne peut pas
+  accéder à tes photos, contacts ou iCloud (il est isolé comme toute app iOS). Si tu
+  préfères, tu peux utiliser un second identifiant dédié — c'est optionnel.
 - ~15 min et un peu de patience la première fois.
 
 **Étapes**
@@ -78,8 +80,9 @@ Aucune clé API : données d'[Open-Meteo](https://open-meteo.com/) (météo + re
   Dynamic Island font partie du Nuage, pas de souci de ce côté).
 - 🔒 Aucune donnée ne quitte ton téléphone : pas de compte, pas de pub, pas de traçage.
 
-*Ça coince ? Écris à l'auteur, il te débloque.* Un serveur d'authentification (« Anisette »)
-peut être nécessaire pour SideStore — demande, il peut t'en prêter un.
+*Ça coince ? [Écris-moi](mailto:contact@duboswebservices.fr), je te débloque.* Un serveur
+d'authentification (« Anisette ») peut être nécessaire pour SideStore — demande-moi, je
+peux t'en prêter un.
 
 ## 🛠 Installer depuis les sources (développeurs)
 
