@@ -7,7 +7,11 @@ struct ReglagesView: View {
     @Binding var ton: Ton
     @Binding var live: Bool
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @State private var anniversaires = Reglages.anniversaires
+    @State private var maj: MiseAJour.Info?
+    @State private var verifEnCours = false
+    @State private var verifFaite = false
 
     var body: some View {
         NavigationStack {
@@ -64,7 +68,39 @@ struct ReglagesView: View {
                 }
 
                 carteSoutien
+
+                Section {
+                    HStack {
+                        Label("Version installée", systemImage: "app.badge")
+                        Spacer()
+                        Text("v\(MiseAJour.versionActuelle)").foregroundStyle(.secondary)
+                    }
+                    if verifEnCours {
+                        HStack { Text("Recherche…"); Spacer(); ProgressView() }
+                    } else if let maj {
+                        Button {
+                            openURL(maj.installUrl)
+                        } label: {
+                            Label("Installer la mise à jour (v\(maj.version))",
+                                  systemImage: "arrow.down.circle.fill")
+                                .fontWeight(.semibold)
+                        }
+                        Link(destination: maj.ipaUrl) {
+                            Text("Ou télécharger le .ipa").font(.caption)
+                        }
+                    } else if verifFaite {
+                        Label("Tu as la dernière version", systemImage: "checkmark.circle")
+                            .foregroundStyle(.secondary)
+                    }
+                    Button("Rechercher une mise à jour") { Task { await verifierMaj() } }
+                        .disabled(verifEnCours)
+                } header: {
+                    Text("Mises à jour")
+                } footer: {
+                    Text("Le Nuage regarde s'il existe une version plus récente sur GitHub et te propose de l'installer via SideStore, en un tap.")
+                }
             }
+            .task { await verifierMaj() }
             .navigationTitle("Réglages")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -111,6 +147,14 @@ struct ReglagesView: View {
             .padding(.vertical, 8)
             .listRowBackground(Color.clear)
         }
+    }
+
+    private func verifierMaj() async {
+        guard !verifEnCours else { return }
+        verifEnCours = true
+        maj = await MiseAJour.verifie()
+        verifEnCours = false
+        verifFaite = true
     }
 
     // Dates stockées "MM-dd" sans année → récurrence annuelle. Pickers jour + mois.
