@@ -6,12 +6,14 @@ import WidgetKit
 // HTML partagé. Deux boutons flottants : ajouter un lieu (gauche), réglages (droite).
 struct AppView: View {
     @StateObject private var loc = LocationProvider()
+    @Environment(\.openURL) private var openURL
     @State private var ton = Reglages.ton
     @State private var live = Reglages.liveActivite
     @State private var lieux = Reglages.lieux
     @State private var page = 0
     @State private var reglagesOuverts = false
     @State private var lieuxOuverts = false
+    @State private var maj: MiseAJour.Info?
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -30,9 +32,13 @@ struct AppView: View {
             .tabViewStyle(.page(indexDisplayMode: lieux.isEmpty ? .never : .always))
             .ignoresSafeArea()
 
-            barreFlottante
+            VStack(spacing: 8) {
+                barreFlottante
+                if let maj { banniereMaj(maj) }
+            }
         }
         .onAppear { loc.demande() }
+        .task { maj = await MiseAJour.verifie() }
         .sheet(isPresented: $reglagesOuverts) {
             ReglagesView(ton: $ton, live: $live).presentationDetents([.large])
         }
@@ -57,6 +63,28 @@ struct AppView: View {
         }
         .padding(.horizontal, 18)
         .padding(.top, 6)
+    }
+
+    // Bandeau discret : n'apparaît que si une version plus récente existe. Un tap lance
+    // l'installation via SideStore. Se referme de lui-même une fois l'app à jour.
+    private func banniereMaj(_ info: MiseAJour.Info) -> some View {
+        Button {
+            openURL(info.installUrl)
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.down.circle.fill")
+                Text("Mise à jour dispo — v\(info.version)")
+                    .font(.footnote.weight(.semibold))
+                Spacer(minLength: 0)
+                Text("Installer").font(.caption.weight(.bold))
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(.ultraThinMaterial, in: Capsule())
+        }
+        .tint(.primary)
+        .padding(.horizontal, 18)
+        .transition(.move(edge: .top).combined(with: .opacity))
     }
 
     private func bouton(_ icone: String, action: @escaping () -> Void) -> some View {
