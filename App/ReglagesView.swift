@@ -28,7 +28,7 @@ struct ReglagesView: View {
                 } header: {
                     Text("Dynamic Island")
                 } footer: {
-                    Text("Un aperçu météo vivant dans l'îlot dynamique et sur l'écran verrouillé, pour ta position actuelle.")
+                    Text("Le nuage fait une brève apparition dans l'îlot dynamique à chaque actualisation, puis s'efface pour laisser la place aux autres apps.")
                 }
 
                 Section {
@@ -62,6 +62,8 @@ struct ReglagesView: View {
                 } footer: {
                     Text("Chaque date revient automatiquement tous les ans : le nuage la fête avec une réplique dédiée et des confettis.")
                 }
+
+                carteSoutien
             }
             .navigationTitle("Réglages")
             .navigationBarTitleDisplayMode(.inline)
@@ -75,6 +77,39 @@ struct ReglagesView: View {
             }
             .onChange(of: anniversaires) { _, v in Reglages.anniversaires = v }
             .onChange(of: live) { _, v in Reglages.liveActivite = v }
+        }
+    }
+
+    // Page de don. Remplacer par ta vraie page une fois le compte Ko-fi créé.
+    static let lienSoutien = "https://ko-fi.com/lenuage"
+
+    // Carte de soutien : pas de pub ni de traçage, juste un lien de don optionnel,
+    // fidèle à la promesse « rien n'est envoyé ». Le visuel suit le ton choisi.
+    private var carteSoutien: some View {
+        let doux = ton == .doux
+        let accent = doux ? Color(hex: "#E0A0B4") : Color(hex: "#5B86C4")
+        return Section {
+            VStack(spacing: 12) {
+                Image(doux ? "doux/radieux" : "taquin/radieux")
+                    .resizable().scaledToFit().frame(height: 66)
+                Text("Le Nuage te plaît ?")
+                    .font(.headline)
+                Text("Il flotte sans pub et sans te pister. Si tu veux le soutenir, offre-lui un café — c'est tout à fait optionnel. ☕️")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                Link(destination: URL(string: Self.lienSoutien)!) {
+                    Label("Lui offrir un café", systemImage: "cup.and.saucer.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 11)
+                        .background(accent.opacity(0.16), in: Capsule())
+                        .foregroundStyle(accent)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .listRowBackground(Color.clear)
         }
     }
 
