@@ -12,6 +12,7 @@ struct ReglagesView: View {
     @State private var maj: MiseAJour.Info?
     @State private var verifEnCours = false
     @State private var verifFaite = false
+    @State private var feedbackOuvert = false
 
     var body: some View {
         NavigationStack {
@@ -67,6 +68,18 @@ struct ReglagesView: View {
                     Text("Chaque date revient automatiquement tous les ans : le nuage la fête avec une réplique dédiée et des confettis.")
                 }
 
+                Section {
+                    Button {
+                        feedbackOuvert = true
+                    } label: {
+                        Label("Proposer une amélioration", systemImage: "bubble.left.and.text.bubble.right")
+                    }
+                } header: {
+                    Text("Ton avis")
+                } footer: {
+                    Text("Une idée, un bug ? Dis-le-moi, ça aide à rendre Le Nuage meilleur.")
+                }
+
                 carteSoutien
 
                 Section {
@@ -101,6 +114,9 @@ struct ReglagesView: View {
                 }
             }
             .task { await verifierMaj() }
+            .sheet(isPresented: $feedbackOuvert) {
+                FeedbackView(ton: ton)
+            }
             .navigationTitle("Réglages")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
