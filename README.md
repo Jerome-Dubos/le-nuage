@@ -44,15 +44,50 @@ méchant. Gratuit, sans pub, sans abonnement, sans compte.
 
 Aucune clé API : données d'[Open-Meteo](https://open-meteo.com/) (météo + recherche de villes).
 
-## Installation (sideload gratuit)
+## 🧪 Tester Le Nuage (sans être développeur)
 
-Pas d'App Store : l'app s'installe via un **Apple ID gratuit** (signature 7 jours,
-rafraîchie sans fil par SideStore). Étapes détaillées dans [`setup-ios.md`](setup-ios.md).
-En résumé :
+> On t'a partagé ce lien pour essayer le nuage ? Bienvenue. ☁️ Il n'est pas sur l'App
+> Store : Apple oblige à l'**installer soi-même** (« sideload »). C'est **gratuit**, ça
+> prend ~15 min la première fois, et ça marche avec **ton propre identifiant Apple**.
+
+**Ce qu'il te faut**
+- Un **iPhone** (iOS 17 ou plus récent).
+- Un **identifiant Apple** — de préférence un compte « jetable » créé pour l'occasion,
+  jamais ton compte principal (l'app est signée avec, en local, rien n'est envoyé).
+- ~15 min et un peu de patience la première fois.
+
+**Étapes**
+
+1. **Récupère l'app** : télécharge le fichier `LeNuage.ipa` depuis la page
+   **[Releases](../../releases/latest)** de ce dépôt (dernière version, tout en haut).
+2. **Installe SideStore** sur ton iPhone en suivant le guide officiel :
+   👉 **<https://sidestore.io/>** (c'est l'outil qui pose l'app et la garde à jour).
+   Pendant l'installation, SideStore te demandera de te connecter avec **ton identifiant
+   Apple** : c'est normal, ça sert uniquement à signer l'app sur ton téléphone.
+3. **Ajoute Le Nuage** : dans SideStore, onglet **My Apps → ➕ → Fichiers →**
+   `LeNuage.ipa`. Quand il demande *« Register App ID for Each Extension »*, **accepte**
+   (ça garde le widget et la Dynamic Island).
+4. **Active le nuage** : Réglages iPhone → **Confidentialité → Mode développeur → activer**
+   (redémarrage demandé), puis ouvre **Le Nuage**. 🎉
+5. **Pose le widget** : appui long sur l'écran d'accueil → `+` → **Le Nuage** → taille moyenne.
+
+**Bon à savoir (limites du gratuit, imposées par Apple)**
+- 🔄 L'app **expire au bout de 7 jours** : garde SideStore installé, il la **rafraîchit
+  tout seul** en tâche de fond quand ton iPhone a du réseau. Rien à refaire à la main.
+- 📦 Un identifiant Apple gratuit permet **3 apps** sideloadées à la fois (le widget et la
+  Dynamic Island font partie du Nuage, pas de souci de ce côté).
+- 🔒 Aucune donnée ne quitte ton téléphone : pas de compte, pas de pub, pas de traçage.
+
+*Ça coince ? Écris à l'auteur, il te débloque.* Un serveur d'authentification (« Anisette »)
+peut être nécessaire pour SideStore — demande, il peut t'en prêter un.
+
+## 🛠 Installer depuis les sources (développeurs)
+
+Signature via un **Apple ID gratuit** (Personal Team, 7 jours). Étapes détaillées dans
+[`setup-ios.md`](setup-ios.md). En résumé :
 
 1. `xcodegen generate` puis ouvrir `LeNuage.xcodeproj` dans Xcode.
-2. Brancher l'iPhone, sélectionner le scheme **LeNuage**, signer avec ton Apple ID
-   (Personal Team), **Run**.
+2. Brancher l'iPhone, sélectionner le scheme **LeNuage**, signer avec ton Apple ID, **Run**.
 3. Ajouter le widget : appui long sur l'écran d'accueil → `+` → **Le Nuage** → taille moyenne.
 4. Pour une installation pérenne : exporter l'`.ipa` et l'installer via
    [SideStore](https://sidestore.io/) (refresh automatique tous les 7 jours).
