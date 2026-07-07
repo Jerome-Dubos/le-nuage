@@ -19,7 +19,7 @@ schemes:
 
 settings:
   base:
-    MARKETING_VERSION: "1.10"
+    MARKETING_VERSION: "1.11"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.0"
     CODE_SIGN_STYLE: Automatic
@@ -58,6 +58,8 @@ targets:
           - UIInterfaceOrientationPortrait
         NSLocationWhenInUseUsageDescription: >-
           Le Nuage utilise ta position pour afficher la météo de l'endroit où tu te trouves.
+        NSCalendarsFullAccessUsageDescription: >-
+          Le Nuage lit ton agenda du jour pour le commenter avec humour. Rien n'est stocké ni envoyé.
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.jeromedubos.lenuage

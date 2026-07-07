@@ -5,7 +5,8 @@ import UIKit
 // injecté en base64 depuis l'asset catalog ; le pool de vannes est embarqué pour
 // que taper le nuage en serve une nouvelle sans aller-retour réseau.
 enum HTMLBuilder {
-    static func build(_ data: Meteo, ton: Ton, lieu: String = "", estPosition: Bool = false) -> String {
+    static func build(_ data: Meteo, ton: Ton, lieu: String = "", estPosition: Bool = false,
+                      agenda: [Agenda.Evenement]? = nil) -> String {
         let c = data.current
         let nuit = c.is_day == 0
         let info = WMO.info(c.weather_code, isDay: c.is_day)
@@ -140,6 +141,15 @@ enum HTMLBuilder {
         let detailsCard = stats.isEmpty ? "" : """
         <div class="card"><h2>Détails <button class="aide" id="aide" type="button" aria-label="Légende">?</button></h2><div class="stats">\(statsHTML)</div>\(legende)</div>
         """
+
+        // Carte agenda : n'apparaît que si le réglage est actif (agenda non-nil, page GPS).
+        let agendaCard = agenda.map { evs -> String in
+            let lignes = evs.map {
+                "<div class=\"prog-l\"><span class=\"prog-h\">\($0.heure)</span><span class=\"prog-t\">\(echappe($0.titre))</span></div>"
+            }.joined()
+            let note = Agenda.commentaire(evs, ton: ton)
+            return "<div class=\"card\"><h2>Ton programme</h2>\(lignes)<div class=\"prog-note\">« \(note) »</div></div>"
+        } ?? ""
 
         // thème : palette selon le ton ; nuit → sombre forcé ; sinon prefers-color-scheme
         let palette = PaletteTon.pour(ton)
@@ -337,6 +347,11 @@ enum HTMLBuilder {
             box-shadow: 0 6px 18px rgba(51,65,79,.07);
           }
           .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; opacity: .55; margin-bottom: 12px; }
+          .prog-l { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 5px 0; border-bottom: 1px solid currentColor; border-color: rgba(128,128,128,.14); }
+          .prog-l:last-of-type { border-bottom: none; }
+          .prog-h { font-weight: 600; font-variant-numeric: tabular-nums; }
+          .prog-t { text-align: right; opacity: .85; }
+          .prog-note { margin-top: 12px; font-style: italic; opacity: .9; }
           .heures { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
           .heure { min-width: 54px; text-align: center; }
           .h-label { font-size: 12px; opacity: .6; }
@@ -392,6 +407,7 @@ enum HTMLBuilder {
             </div>
           </div>
           <div class="vanne" id="vanne">« \(repliqueAffichee) »</div>
+          \(agendaCard)
           \(detailsCard)
           <div class="card"><h2>Prochaines heures</h2><div class="heures">\(heuresHTML)</div></div>
           <div class="card"><h2>La semaine</h2>\(joursHTML)</div>
@@ -592,6 +608,14 @@ enum HTMLBuilder {
 
     // Nuage en SVG inline (depuis le bundle) → animable (clignement). Le widget, lui,
     // reste sur les PNG (une extension ne peut pas animer).
+    // Échappe le texte libre (titres d'évènements) avant injection dans le HTML.
+    private static func echappe(_ s: String) -> String {
+        s.replacingOccurrences(of: "&", with: "&amp;")
+         .replacingOccurrences(of: "<", with: "&lt;")
+         .replacingOccurrences(of: ">", with: "&gt;")
+         .replacingOccurrences(of: "\"", with: "&quot;")
+    }
+
     private static func svgInline(etat: String, nuit: Bool, ton: Ton) -> String {
         let dossier = ton == .doux ? "svg-doux" : "svg"
         let nom = "\(etat)\(nuit ? "_nuit" : "")"

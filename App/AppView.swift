@@ -9,6 +9,7 @@ struct AppView: View {
     @Environment(\.openURL) private var openURL
     @State private var ton = Reglages.ton
     @State private var live = Reglages.liveActivite
+    @State private var cal = Reglages.calendrier
     @State private var lieux = Reglages.lieux
     @State private var page = 0
     @State private var reglagesOuverts = false
@@ -20,7 +21,7 @@ struct AppView: View {
             TabView(selection: $page) {
                 PageMeteoVue(coords: loc.coords,
                              nom: loc.nomLieu ?? "Ma position",
-                             estPosition: true, ton: ton, cap: loc.cap, live: live)
+                             estPosition: true, ton: ton, cap: loc.cap, live: live, cal: cal)
                     .tag(0)
 
                 ForEach(Array(lieux.enumerated()), id: \.element.id) { i, l in
@@ -40,7 +41,7 @@ struct AppView: View {
         .onAppear { loc.demande(); Reveil.applique() }
         .task { maj = await MiseAJour.verifie() }
         .sheet(isPresented: $reglagesOuverts) {
-            ReglagesView(ton: $ton, live: $live).presentationDetents([.large])
+            ReglagesView(ton: $ton, live: $live, cal: $cal).presentationDetents([.large])
         }
         .sheet(isPresented: $lieuxOuverts) {
             LieuxView(lieux: $lieux)

@@ -7,6 +7,7 @@ import WidgetKit
 struct ReglagesView: View {
     @Binding var ton: Ton
     @Binding var live: Bool
+    @Binding var cal: Bool
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     @State private var anniversaires = Reglages.anniversaires
@@ -54,6 +55,14 @@ struct ReglagesView: View {
                     Text("Look du nuage")
                 } footer: {
                     Text("Le nuage s'habille selon le temps : lunettes au soleil, bonnet dans le froid, parapluie sous la pluie.")
+                }
+
+                Section {
+                    Toggle("Agenda commenté", isOn: $cal)
+                } header: {
+                    Text("Ton programme")
+                } footer: {
+                    Text("Le nuage lit ton agenda du jour et le commente à sa façon, sur la page de ta position. Lecture seule, rien n'est envoyé.")
                 }
 
                 Section {
@@ -176,6 +185,7 @@ struct ReglagesView: View {
                 Reglages.reveil = v
                 Reveil.applique()
             }
+            .onChange(of: cal) { _, v in Reglages.calendrier = v }
             .onChange(of: reveilDate) { _, d in
                 Reglages.reveilHeure = Reveil.minutes(de: d)
                 Reveil.applique()

@@ -84,6 +84,12 @@ enum Reglages {
         get { AppGroupe.defaults.bool(forKey: "reveil") }
         set { AppGroupe.defaults.set(newValue, forKey: "reveil") }
     }
+
+    // Agenda commenté : le nuage lit le calendrier du jour. Désactivé par défaut (permission).
+    static var calendrier: Bool {
+        get { AppGroupe.defaults.bool(forKey: "calendrier") }
+        set { AppGroupe.defaults.set(newValue, forKey: "calendrier") }
+    }
     // Heure du réveil, en minutes depuis minuit (défaut 8 h 00).
     static var reveilHeure: Int {
         get { AppGroupe.defaults.object(forKey: "reveil-heure") as? Int ?? 8 * 60 }

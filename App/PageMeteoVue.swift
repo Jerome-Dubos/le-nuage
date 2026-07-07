@@ -9,6 +9,7 @@ struct PageMeteoVue: View {
     let ton: Ton
     let cap: Double
     var live: Bool = false  // état du réglage Dynamic Island (relance charge au changement)
+    var cal: Bool = false   // état du réglage Agenda commenté (idem)
 
     @State private var html: String?
     @State private var erreur = false
@@ -16,7 +17,7 @@ struct PageMeteoVue: View {
     var body: some View {
         contenu
             // recharge si le lieu, la position, le ton ou le réglage Live Activity changent
-            .task(id: "\(coords.latitude),\(coords.longitude)|\(nom)|\(ton.rawValue)|\(live)") {
+            .task(id: "\(coords.latitude),\(coords.longitude)|\(nom)|\(ton.rawValue)|\(live)|\(cal)") {
                 await charge()
             }
     }
@@ -44,7 +45,9 @@ struct PageMeteoVue: View {
     private func charge() async {
         do {
             let m = try await WeatherService.charge(coords: coords)
-            html = HTMLBuilder.build(m, ton: ton, lieu: nom, estPosition: estPosition)
+            // agenda uniquement sur la page GPS et si le réglage est actif
+            let agenda = (estPosition && cal) ? await Agenda.duJour() : nil
+            html = HTMLBuilder.build(m, ton: ton, lieu: nom, estPosition: estPosition, agenda: agenda)
             erreur = false
             // la Live Activity suit la position GPS (page 0)
             if estPosition { LiveActivite.majDepuis(m, ton: ton) }

@@ -20,6 +20,8 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Le Nuage lit ton agenda du jour pour le commenter avec humour. Rien n'est stocké ni envoyé.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Le Nuage utilise ta position pour afficher la météo de l'endroit où tu te trouves.</string>
 	<key>NSSupportsLiveActivities</key>
