@@ -19,7 +19,7 @@ schemes:
 
 settings:
   base:
-    MARKETING_VERSION: "1.12"
+    MARKETING_VERSION: "1.13"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.0"
     CODE_SIGN_STYLE: Automatic
@@ -77,12 +77,17 @@ targets:
       - target: LeNuageWidgetExtension
       - target: LeNuageStickers
 
-  # ---- Pack de stickers iMessage ----------------------------------------
+  # ---- Extension stickers iMessage (pilotée par code) -------------------
   LeNuageStickers:
-    type: app-extension.messages-sticker-pack
+    type: app-extension.messages
     platform: iOS
     sources:
+      - path: Stickers/StickerBrowser.swift
+      - path: Stickers/png
+        type: folder
       - path: Stickers.xcstickers
+    dependencies:
+      - sdk: Messages.framework
     info:
       path: Stickers/Info.plist
       properties:
@@ -91,7 +96,7 @@ targets:
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.message-payload-provider
-          NSExtensionPrincipalClass: StickerBrowserViewController
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).StickerBrowser
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.jeromedubos.lenuage.stickers
