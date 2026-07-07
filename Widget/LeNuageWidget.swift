@@ -300,25 +300,22 @@ struct LeNuageWidgetEntryView: View {
     private func rectangulaire(_ c: NuageEntry.Contenu?) -> some View {
         Group {
             if let c {
-                HStack(spacing: 8) {
+                HStack(spacing: 10) {
                     Image(systemName: c.symbole)
-                        .font(.title2)
+                        .font(.largeTitle)
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
                             Text("\(c.temp)°")
-                                .font(.headline)
-                            Text("↓\(c.min)° ↑\(c.max)°")
-                                .font(.caption2)
+                                .font(.title3.weight(.semibold))
+                            Text(c.label)
+                                .font(.caption)
                                 .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
                         }
-                        Text(c.label)
-                            .font(.caption)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                        Text("« \(c.vanne) »")
+                        Text("↓\(c.min)°  ↑\(c.max)°")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
-                            .lineLimit(1)
                     }
                     Spacer(minLength: 0)
                 }
