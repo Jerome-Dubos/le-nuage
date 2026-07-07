@@ -294,13 +294,19 @@ struct LeNuageWidgetEntryView: View {
             if let c {
                 HStack(spacing: 8) {
                     Image(systemName: c.symbole)
-                        .font(.title3)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("\(c.temp)° · \(c.label)")
-                            .font(.headline)
-                            .lineLimit(1)
-                        Text("↓\(c.min)°  ↑\(c.max)°")
+                        .font(.title2)
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            Text("\(c.temp)°")
+                                .font(.headline)
+                            Text("↓\(c.min)° ↑\(c.max)°")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        Text(c.label)
                             .font(.caption)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                         Text("« \(c.vanne) »")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
