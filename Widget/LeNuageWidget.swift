@@ -303,19 +303,19 @@ struct LeNuageWidgetEntryView: View {
                 HStack(spacing: 10) {
                     Image(systemName: c.symbole)
                         .font(.largeTitle)
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 1) {
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
                             Text("\(c.temp)°")
                                 .font(.title3.weight(.semibold))
-                            Text(c.label)
-                                .font(.caption)
+                            Text("↓\(c.min)° ↑\(c.max)°")
+                                .font(.caption2)
                                 .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
                         }
-                        Text("↓\(c.min)°  ↑\(c.max)°")
-                            .font(.caption2)
+                        Text(c.label)
+                            .font(.caption)
                             .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.8)
                     }
                     Spacer(minLength: 0)
                 }
