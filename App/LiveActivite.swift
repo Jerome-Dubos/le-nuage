@@ -17,7 +17,7 @@ enum LiveActivite {
 
         let c = m.current
         let nuit = c.is_day == 0
-        let etat = WMO.etatNuage(c.weather_code)
+        let etat = WMO.humeur(code: c.weather_code, temp: Int(c.temperature_2m.rounded()))
         let state = NuageActivityAttributes.ContentState(
             temp: Int(c.temperature_2m.rounded()),
             label: WMO.info(c.weather_code, isDay: c.is_day).label,

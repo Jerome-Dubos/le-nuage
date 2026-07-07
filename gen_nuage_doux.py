@@ -142,6 +142,18 @@ def etoile(x, y, s, couleur=None):
 
 ETOILES = etoile(98, 92, 9, OR) + etoile(436, 120, 7, OR)  # 2 étoiles sobres
 
+
+def yeux_fondus():
+    return trait("M 186 226 Q 204 241 222 226", 11) + trait("M 290 226 Q 308 241 326 226", 11)
+LANGUE = ('<path d="M 226 263 A 30 30 0 0 0 286 263 Z" fill="%s"/>' % ENCRE
+          + '<path d="M 246 285 Q 246 306 259 306 Q 271 306 271 288 Z" fill="%s" stroke="%s" stroke-width="2.5"/>' % (JOUES, JOUES_FONCE))
+SUEUR = ('<path d="M 140 158 Q 156 186 140 200 Q 124 186 140 158 Z" fill="%s" stroke="%s" stroke-width="3"/>' % (LARME, OMBRE)
+         + '<path d="M 372 158 Q 388 186 372 200 Q 356 186 372 158 Z" fill="%s" stroke="%s" stroke-width="3"/>' % (LARME, OMBRE))
+ZIGZAG = trait("M 222 273 L 238 285 L 254 273 L 270 285 L 286 273", 8)
+def frisson(couleur):
+    return (trait("M 66 228 Q 52 250 66 272", 7, couleur) + trait("M 88 236 Q 78 251 88 264", 6, couleur)
+            + trait("M 446 228 Q 460 250 446 272", 7, couleur) + trait("M 424 236 Q 434 251 424 264", 6, couleur))
+
 # --- états : (yeux jour, bouche, sourcils, accessoires fixes, interjection nuit-adaptative) ---
 ETATS = {
     "radieux":    (yeux_ouverts(14), GRAND_SOURIRE, "",              "",        None),
@@ -151,10 +163,12 @@ ETATS = {
     "blase":      (yeux_tristes(),   TRISTE_BOUCHE, "",              PARAPLUIE + LARMES, None),
     "emmitoufle": (yeux_ouverts(12), PETIT_O,       "",              ECHARPE,   None),
     "flippe":     (yeux_grands(),    GRAND_O,       SOURCILS_FLIPPE, GOUTTE,    None),
+    "canicule":   (yeux_fondus(),   LANGUE,  "", SUEUR, None),
+    "grelotte":   (yeux_grands(),   ZIGZAG,  "", "",    frisson),
 }
 
 # états qui gardent leurs yeux la nuit (l'émotion prime sur la somnolence)
-GARDENT_LEURS_YEUX = ("endormi", "flippe", "blase", "ronchon")
+GARDENT_LEURS_YEUX = ("endormi", "flippe", "blase", "ronchon", "canicule", "grelotte")
 
 def svg_nuage(nom, nuit=False):
     yeux, bouche, sourcils, acc, interj = ETATS[nom]

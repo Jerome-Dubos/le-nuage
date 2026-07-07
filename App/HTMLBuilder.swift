@@ -28,7 +28,7 @@ enum HTMLBuilder {
         let (occVanne, deco) = occasionDuJour(ton: ton)
         let repliqueAffichee = occVanne ?? replique
 
-        let etat = WMO.etatNuage(c.weather_code)
+        let etat = WMO.humeur(code: c.weather_code, temp: Int(c.temperature_2m.rounded()))
         var nuageSVG = svgInline(etat: etat, nuit: nuit, ton: ton)
         if let tenue = Tenue.pour(code: c.weather_code,
                                   temp: Int(c.temperature_2m.rounded()),

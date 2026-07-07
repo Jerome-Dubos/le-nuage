@@ -56,7 +56,7 @@ extension NuageEntry {
     static func construit(_ m: Meteo, ton: Ton) -> Contenu {
         let c = m.current
         let nuit = c.is_day == 0
-        let etat = WMO.etatNuage(c.weather_code)
+        let etat = WMO.humeur(code: c.weather_code, temp: Int(c.temperature_2m.rounded()))
         return Contenu(
             asset: "\(ton.rawValue)/\(etat)\(nuit ? "_nuit" : "")",
             label: WMO.info(c.weather_code, isDay: c.is_day).label,

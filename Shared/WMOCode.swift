@@ -16,6 +16,17 @@ enum WMO {
         }
     }
 
+    // Humeur affichée : la météo (etatNuage) enrichie de deux humeurs pilotées par la
+    // température, mais seulement par temps calme (pas pendant pluie/neige/orage).
+    static func humeur(code: Int, temp: Int) -> String {
+        let calme = code <= 3 || code == 45 || code == 48
+        if calme {
+            if temp >= 33 { return "canicule" }
+            if temp <= 0 { return "grelotte" }
+        }
+        return etatNuage(code)
+    }
+
     // (b) code → groupe de répliques
     static func groupeReplique(_ code: Int) -> String {
         switch code {
