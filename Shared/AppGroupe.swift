@@ -73,6 +73,12 @@ enum Reglages {
         set { AppGroupe.defaults.set(newValue, forKey: "live-activite") }
     }
 
+    // Tenues météo du nuage (bonnet, lunettes, parapluie). Activé par défaut.
+    static var tenues: Bool {
+        get { AppGroupe.defaults.object(forKey: "tenues-meteo") as? Bool ?? true }
+        set { AppGroupe.defaults.set(newValue, forKey: "tenues-meteo") }
+    }
+
     // Lieux enregistrés (en plus de la position GPS). Partagés app ↔ widget.
     static var lieux: [Lieu] {
         get {

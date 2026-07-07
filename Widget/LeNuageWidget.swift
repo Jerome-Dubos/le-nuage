@@ -19,6 +19,7 @@ struct NuageEntry: TimelineEntry {
         let vanne: String
         let nuit: Bool
         let symbole: String        // symbole SF météo (écran verrouillé / accessoires)
+        let tenue: String?         // accessoire météo superposé (nil = neutre)
     }
 }
 
@@ -66,7 +67,10 @@ extension NuageEntry {
             pluie: PluieDansLHeure.calcule(m),
             vanne: Repliques.choisit(pour: m, ton: ton),
             nuit: nuit,
-            symbole: sfSymbole(c.weather_code, isDay: c.is_day)
+            symbole: sfSymbole(c.weather_code, isDay: c.is_day),
+            tenue: Tenue.pour(code: c.weather_code,
+                              temp: Int(c.temperature_2m.rounded()),
+                              jour: c.is_day == 1)?.asset
         )
     }
 
@@ -95,7 +99,8 @@ extension NuageEntry {
         pluie: .sec,
         vanne: "Pas l'ombre d'un nuage. Sauf moi. Je suis l'exception.",
         nuit: false,
-        symbole: "sun.max.fill"
+        symbole: "sun.max.fill",
+        tenue: nil
     )
 }
 
@@ -171,13 +176,19 @@ struct LeNuageWidgetEntryView: View {
         }
     }
 
+    // Nuage habillé : image de base + accessoire météo superposé (même cadre → aligné).
+    private func nuageHabille(_ c: NuageEntry.Contenu) -> some View {
+        ZStack {
+            Image(c.asset).resizable().scaledToFit()
+            if let t = c.tenue { Image(t).resizable().scaledToFit() }
+        }
+    }
+
     // Medium : nuage + météo à gauche, vanne dessous.
     private func moyen(_ c: NuageEntry.Contenu, ink: Color) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             HStack(alignment: .center, spacing: 14) {
-                Image(c.asset)
-                    .resizable()
-                    .scaledToFit()
+                nuageHabille(c)
                     .frame(width: 88, height: 68)
 
                 VStack(alignment: .leading, spacing: 0) {
@@ -214,9 +225,7 @@ struct LeNuageWidgetEntryView: View {
     // Small : nuage centré, température, résumé court (pas de vanne, place limitée).
     private func petit(_ c: NuageEntry.Contenu, ink: Color) -> some View {
         VStack(spacing: 2) {
-            Image(c.asset)
-                .resizable()
-                .scaledToFit()
+            nuageHabille(c)
                 .frame(height: 58)
             Text("\(c.temp)°")
                 .font(police(30, .bold))
@@ -237,9 +246,7 @@ struct LeNuageWidgetEntryView: View {
     // Large : grande scène, météo détaillée, vanne mise en avant.
     private func grand(_ c: NuageEntry.Contenu, ink: Color) -> some View {
         VStack(spacing: 10) {
-            Image(c.asset)
-                .resizable()
-                .scaledToFit()
+            nuageHabille(c)
                 .frame(height: 132)
             Text("\(c.temp)°")
                 .font(police(54, .bold))

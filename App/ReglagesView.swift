@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 
 // Réglages : choix du caractère du nuage. Sélecteur à deux cartes montrant les deux
 // personnages (taquin / doux) plutôt qu'un segmented control basique — plus premium
@@ -13,6 +14,7 @@ struct ReglagesView: View {
     @State private var verifEnCours = false
     @State private var verifFaite = false
     @State private var feedbackOuvert = false
+    @State private var tenues = Reglages.tenues
 
     var body: some View {
         NavigationStack {
@@ -26,6 +28,30 @@ struct ReglagesView: View {
                     }
                     .listRowInsets(EdgeInsets(top: 14, leading: 14, bottom: 14, trailing: 14))
                     .listRowBackground(Color.clear)
+                }
+
+                Section {
+                    Toggle("Tenues météo", isOn: $tenues)
+                    if tenues {
+                        HStack(spacing: 18) {
+                            ForEach(["lunettes", "bonnet", "parapluie"], id: \.self) { a in
+                                ZStack {
+                                    Image(ton == .doux ? "doux/radieux" : "taquin/radieux")
+                                        .resizable().scaledToFit()
+                                    Image("accessoires/\(a)")
+                                        .resizable().scaledToFit()
+                                }
+                                .frame(height: 56)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
+                        .listRowBackground(Color.clear)
+                    }
+                } header: {
+                    Text("Look du nuage")
+                } footer: {
+                    Text("Le nuage s'habille selon le temps : lunettes au soleil, bonnet dans le froid, parapluie sous la pluie.")
                 }
 
                 Section {
@@ -129,6 +155,10 @@ struct ReglagesView: View {
             }
             .onChange(of: anniversaires) { _, v in Reglages.anniversaires = v }
             .onChange(of: live) { _, v in Reglages.liveActivite = v }
+            .onChange(of: tenues) { _, v in
+                Reglages.tenues = v
+                WidgetCenter.shared.reloadAllTimelines()
+            }
         }
     }
 

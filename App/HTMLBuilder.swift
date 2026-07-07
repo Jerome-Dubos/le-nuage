@@ -28,7 +28,12 @@ enum HTMLBuilder {
         let repliqueAffichee = occVanne ?? replique
 
         let etat = WMO.etatNuage(c.weather_code)
-        let nuageSVG = svgInline(etat: etat, nuit: nuit, ton: ton)
+        var nuageSVG = svgInline(etat: etat, nuit: nuit, ton: ton)
+        if let tenue = Tenue.pour(code: c.weather_code,
+                                  temp: Int(c.temperature_2m.rounded()),
+                                  jour: c.is_day == 1) {
+            nuageSVG = injecteTenue(nuageSVG, tenue: tenue)
+        }
         // ne cligne que si les yeux affichés sont ouverts (sinon œil déjà fermé : clin / mi-clos)
         let peutCligner = peutCligner(etat: etat, nuit: nuit)
         let vannes = Repliques.pool(pour: data, ton: ton).map { Repliques.remplaceTemp($0, meteo: data) }
@@ -592,6 +597,18 @@ enum HTMLBuilder {
         guard let url = Bundle.main.url(forResource: nom, withExtension: "svg", subdirectory: dossier),
               let svg = try? String(contentsOf: url, encoding: .utf8) else { return "" }
         return svg
+    }
+
+    // Superpose l'accessoire météo au nuage : on lit le SVG de la tenue (même viewBox
+    // 512×400), on extrait son contenu et on l'insère juste avant la fermeture du SVG.
+    private static func injecteTenue(_ svg: String, tenue: Tenue) -> String {
+        guard let url = Bundle.main.url(forResource: tenue.rawValue, withExtension: "svg", subdirectory: "svg-accessoires"),
+              let contenu = try? String(contentsOf: url, encoding: .utf8),
+              let ouvre = contenu.range(of: ">"),
+              let clot = contenu.range(of: "</svg>", options: .backwards),
+              let fermeture = svg.range(of: "</svg>", options: .backwards) else { return svg }
+        let interne = String(contenu[ouvre.upperBound..<clot.lowerBound])
+        return svg.replacingCharacters(in: fermeture, with: "<g class=\"tenue\">\(interne)</g></svg>")
     }
 
     // Occasions spéciales : (vanne thématique selon le ton, décor festif). nil sinon.
