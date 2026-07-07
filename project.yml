@@ -19,7 +19,7 @@ schemes:
 
 settings:
   base:
-    MARKETING_VERSION: "1.13"
+    MARKETING_VERSION: "1.14"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.0"
     CODE_SIGN_STYLE: Automatic
@@ -96,7 +96,7 @@ targets:
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.message-payload-provider
-          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).StickerBrowser
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).MessagesViewController
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.jeromedubos.lenuage.stickers
