@@ -15,6 +15,7 @@ struct ReglagesView: View {
     @State private var verifEnCours = false
     @State private var verifFaite = false
     @State private var feedbackOuvert = false
+    @State private var quoiDeNeuf: JournalMaj?
     @State private var tenues = Reglages.tenues
     @State private var reveil = Reglages.reveil
     @State private var reveilDate = Reveil.heureDate
@@ -157,6 +158,9 @@ struct ReglagesView: View {
                     }
                     Button("Rechercher une mise à jour") { Task { await verifierMaj() } }
                         .disabled(verifEnCours)
+                    Button("Quoi de neuf ?") {
+                        quoiDeNeuf = JournalMaj(entrees: Nouveautes.journal)
+                    }
                 } header: {
                     Text("Mises à jour")
                 } footer: {
@@ -166,6 +170,9 @@ struct ReglagesView: View {
             .task { await verifierMaj() }
             .sheet(isPresented: $feedbackOuvert) {
                 FeedbackView(ton: ton)
+            }
+            .sheet(item: $quoiDeNeuf) { j in
+                NouveautesView(entrees: j.entrees).presentationDetents([.medium, .large])
             }
             .navigationTitle("Réglages")
             .navigationBarTitleDisplayMode(.inline)

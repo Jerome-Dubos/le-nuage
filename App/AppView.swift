@@ -15,6 +15,7 @@ struct AppView: View {
     @State private var reglagesOuverts = false
     @State private var lieuxOuverts = false
     @State private var maj: MiseAJour.Info?
+    @State private var quoiDeNeuf: JournalMaj?
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -38,7 +39,14 @@ struct AppView: View {
                 if let maj { banniereMaj(maj) }
             }
         }
-        .onAppear { loc.demande(); Reveil.applique(); AlertePluie.programme() }
+        .onAppear {
+            loc.demande(); Reveil.applique(); AlertePluie.programme()
+            let n = Nouveautes.aMontrer()
+            if !n.isEmpty { quoiDeNeuf = JournalMaj(entrees: n) }
+        }
+        .sheet(item: $quoiDeNeuf) { j in
+            NouveautesView(entrees: j.entrees).presentationDetents([.medium, .large])
+        }
         .task { maj = await MiseAJour.verifie() }
         .sheet(isPresented: $reglagesOuverts) {
             ReglagesView(ton: $ton, live: $live, cal: $cal).presentationDetents([.large])
