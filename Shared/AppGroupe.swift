@@ -73,10 +73,21 @@ enum Reglages {
         set { AppGroupe.defaults.set(newValue, forKey: "live-activite") }
     }
 
-    // Tenues météo du nuage (bonnet, lunettes, parapluie). Activé par défaut.
+    // Tenues météo du nuage (bonnet, lunettes, parapluie, écharpe). Activé par défaut.
     static var tenues: Bool {
         get { AppGroupe.defaults.object(forKey: "tenues-meteo") as? Bool ?? true }
         set { AppGroupe.defaults.set(newValue, forKey: "tenues-meteo") }
+    }
+
+    // Réveil du nuage : notif quotidienne. Désactivé par défaut.
+    static var reveil: Bool {
+        get { AppGroupe.defaults.bool(forKey: "reveil") }
+        set { AppGroupe.defaults.set(newValue, forKey: "reveil") }
+    }
+    // Heure du réveil, en minutes depuis minuit (défaut 8 h 00).
+    static var reveilHeure: Int {
+        get { AppGroupe.defaults.object(forKey: "reveil-heure") as? Int ?? 8 * 60 }
+        set { AppGroupe.defaults.set(newValue, forKey: "reveil-heure") }
     }
 
     // Lieux enregistrés (en plus de la position GPS). Partagés app ↔ widget.

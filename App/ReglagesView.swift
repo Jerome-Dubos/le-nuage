@@ -15,6 +15,8 @@ struct ReglagesView: View {
     @State private var verifFaite = false
     @State private var feedbackOuvert = false
     @State private var tenues = Reglages.tenues
+    @State private var reveil = Reglages.reveil
+    @State private var reveilDate = Reveil.heureDate
 
     var body: some View {
         NavigationStack {
@@ -34,7 +36,7 @@ struct ReglagesView: View {
                     Toggle("Tenues météo", isOn: $tenues)
                     if tenues {
                         HStack(spacing: 18) {
-                            ForEach(["lunettes", "bonnet", "parapluie"], id: \.self) { a in
+                            ForEach(["lunettes", "bonnet", "parapluie", "echarpe"], id: \.self) { a in
                                 ZStack {
                                     Image(ton == .doux ? "doux/radieux" : "taquin/radieux")
                                         .resizable().scaledToFit()
@@ -52,6 +54,17 @@ struct ReglagesView: View {
                     Text("Look du nuage")
                 } footer: {
                     Text("Le nuage s'habille selon le temps : lunettes au soleil, bonnet dans le froid, parapluie sous la pluie.")
+                }
+
+                Section {
+                    Toggle("Réveil du nuage", isOn: $reveil)
+                    if reveil {
+                        DatePicker("Heure", selection: $reveilDate, displayedComponents: .hourAndMinute)
+                    }
+                } header: {
+                    Text("Réveil du nuage")
+                } footer: {
+                    Text("Un petit mot du nuage chaque matin à l'heure choisie. Désactivé par défaut.")
                 }
 
                 Section {
@@ -158,6 +171,14 @@ struct ReglagesView: View {
             .onChange(of: tenues) { _, v in
                 Reglages.tenues = v
                 WidgetCenter.shared.reloadAllTimelines()
+            }
+            .onChange(of: reveil) { _, v in
+                Reglages.reveil = v
+                Reveil.applique()
+            }
+            .onChange(of: reveilDate) { _, d in
+                Reglages.reveilHeure = Reveil.minutes(de: d)
+                Reveil.applique()
             }
         }
     }

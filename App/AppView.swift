@@ -37,7 +37,7 @@ struct AppView: View {
                 if let maj { banniereMaj(maj) }
             }
         }
-        .onAppear { loc.demande() }
+        .onAppear { loc.demande(); Reveil.applique() }
         .task { maj = await MiseAJour.verifie() }
         .sheet(isPresented: $reglagesOuverts) {
             ReglagesView(ton: $ton, live: $live).presentationDetents([.large])

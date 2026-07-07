@@ -31,6 +31,7 @@ enum HTMLBuilder {
         var nuageSVG = svgInline(etat: etat, nuit: nuit, ton: ton)
         if let tenue = Tenue.pour(code: c.weather_code,
                                   temp: Int(c.temperature_2m.rounded()),
+                                  vent: Int(c.wind_speed_10m.rounded()),
                                   jour: c.is_day == 1) {
             nuageSVG = injecteTenue(nuageSVG, tenue: tenue)
         }
