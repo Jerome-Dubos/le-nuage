@@ -60,6 +60,10 @@ targets:
           Le Nuage utilise ta position pour afficher la météo de l'endroit où tu te trouves.
         NSCalendarsFullAccessUsageDescription: >-
           Le Nuage lit ton agenda du jour pour le commenter avec humour. Rien n'est stocké ni envoyé.
+        UIBackgroundModes:
+          - fetch
+        BGTaskSchedulerPermittedIdentifiers:
+          - com.jeromedubos.lenuage.pluie
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.jeromedubos.lenuage

@@ -18,6 +18,7 @@ struct ReglagesView: View {
     @State private var tenues = Reglages.tenues
     @State private var reveil = Reglages.reveil
     @State private var reveilDate = Reveil.heureDate
+    @State private var alertePluie = Reglages.alertePluie
 
     var body: some View {
         NavigationStack {
@@ -70,10 +71,11 @@ struct ReglagesView: View {
                     if reveil {
                         DatePicker("Heure", selection: $reveilDate, displayedComponents: .hourAndMinute)
                     }
+                    Toggle("Alerte pluie", isOn: $alertePluie)
                 } header: {
-                    Text("Réveil du nuage")
+                    Text("Notifications")
                 } footer: {
-                    Text("Un petit mot du nuage chaque matin à l'heure choisie. Désactivé par défaut.")
+                    Text("Réveil : un mot du nuage chaque matin. Alerte pluie : un avertissement quand la pluie approche (quand iOS rafraîchit l'app en fond). Désactivés par défaut.")
                 }
 
                 Section {
@@ -186,6 +188,10 @@ struct ReglagesView: View {
                 Reveil.applique()
             }
             .onChange(of: cal) { _, v in Reglages.calendrier = v }
+            .onChange(of: alertePluie) { _, v in
+                Reglages.alertePluie = v
+                if v { AlertePluie.active() } else { AlertePluie.annule() }
+            }
             .onChange(of: reveilDate) { _, d in
                 Reglages.reveilHeure = Reveil.minutes(de: d)
                 Reveil.applique()

@@ -90,6 +90,17 @@ enum Reglages {
         get { AppGroupe.defaults.bool(forKey: "calendrier") }
         set { AppGroupe.defaults.set(newValue, forKey: "calendrier") }
     }
+
+    // Alerte pluie : notif quand la pluie arrive dans l'heure. Désactivé par défaut.
+    static var alertePluie: Bool {
+        get { AppGroupe.defaults.bool(forKey: "alerte-pluie") }
+        set { AppGroupe.defaults.set(newValue, forKey: "alerte-pluie") }
+    }
+    // Horodatage de la dernière alerte pluie (anti-spam).
+    static var derniereAlertePluie: Double {
+        get { AppGroupe.defaults.double(forKey: "derniere-alerte-pluie") }
+        set { AppGroupe.defaults.set(newValue, forKey: "derniere-alerte-pluie") }
+    }
     // Heure du réveil, en minutes depuis minuit (défaut 8 h 00).
     static var reveilHeure: Int {
         get { AppGroupe.defaults.object(forKey: "reveil-heure") as? Int ?? 8 * 60 }
