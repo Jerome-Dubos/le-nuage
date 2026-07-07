@@ -265,6 +265,8 @@ struct LeNuageWidgetEntryView: View {
 
     // MARK: Écran verrouillé / StandBy (accessoires monochromes)
 
+    // iOS 17+ EXIGE .containerBackground pour tout widget, accessoires compris,
+    // sinon l'écran verrouillé affiche « Please adopt containerBackground API ».
     @ViewBuilder
     private func inline(_ c: NuageEntry.Contenu?) -> some View {
         if let c {
@@ -276,40 +278,41 @@ struct LeNuageWidgetEntryView: View {
 
     @ViewBuilder
     private func circulaire(_ c: NuageEntry.Contenu?) -> some View {
-        ZStack {
-            AccessoryWidgetBackground()
-            VStack(spacing: 0) {
-                Image(systemName: c?.symbole ?? "cloud.fill")
-                    .font(.system(size: 14))
-                Text("\(c?.temp ?? 0)°")
-                    .font(.system(size: 16, weight: .bold))
-                    .minimumScaleFactor(0.7)
-            }
+        VStack(spacing: 0) {
+            Image(systemName: c?.symbole ?? "cloud.fill")
+                .font(.system(size: 14))
+            Text("\(c?.temp ?? 0)°")
+                .font(.system(size: 16, weight: .bold))
+                .minimumScaleFactor(0.7)
         }
+        .containerBackground(for: .widget) { AccessoryWidgetBackground() }
     }
 
     @ViewBuilder
     private func rectangulaire(_ c: NuageEntry.Contenu?) -> some View {
-        if let c {
-            HStack(spacing: 8) {
-                Image(systemName: c.symbole)
-                    .font(.title3)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("\(c.temp)° · \(c.label)")
-                        .font(.headline)
-                        .lineLimit(1)
-                    Text("↓\(c.min)°  ↑\(c.max)°")
-                        .font(.caption)
-                    Text("« \(c.vanne) »")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
+        Group {
+            if let c {
+                HStack(spacing: 8) {
+                    Image(systemName: c.symbole)
+                        .font(.title3)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("\(c.temp)° · \(c.label)")
+                            .font(.headline)
+                            .lineLimit(1)
+                        Text("↓\(c.min)°  ↑\(c.max)°")
+                            .font(.caption)
+                        Text("« \(c.vanne) »")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
                 }
-                Spacer(minLength: 0)
+            } else {
+                Label("Le wifi des nuages est en rade.", systemImage: "cloud.fill")
             }
-        } else {
-            Label("Le wifi des nuages est en rade.", systemImage: "cloud.fill")
         }
+        .containerBackground(for: .widget) { Color.clear }
     }
 
     @ViewBuilder
