@@ -76,7 +76,18 @@ class ReglagesActivity : Activity() {
         contenu.addView(entete("Caractère du nuage"))
         contenu.addView(carteCaractere())
         contenu.addView(entete("Apparence"))
-        contenu.addView(carteTenues())
+        contenu.addView(carteToggle("Tenues météo", "Bonnet, parapluie, lunettes, écharpe — selon la météo en direct.", "tenues-meteo", true, null))
+
+        contenu.addView(entete("Ton programme"))
+        contenu.addView(carteToggle("Agenda commenté", "Le nuage lit ton agenda du jour et le commente. Lecture seule, rien n'est envoyé.", "calendrier", false) { on ->
+            if (on && checkSelfPermission(android.Manifest.permission.READ_CALENDAR) != android.content.pm.PackageManager.PERMISSION_GRANTED)
+                requestPermissions(arrayOf(android.Manifest.permission.READ_CALENDAR), 2)
+        })
+
+        contenu.addView(entete("Dates spéciales"))
+        contenu.addView(carteAction("Gérer les dates spéciales  🎂", "Anniversaires et fêtes, célébrés chaque année.") {
+            startActivity(Intent(this, DatesActivity::class.java))
+        })
 
         contenu.addView(entete("Contact & soutien"))
         contenu.addView(carteAction("Proposer une amélioration", "Une idée, un bug ? Écris-moi.") {
@@ -198,7 +209,8 @@ class ReglagesActivity : Activity() {
         return col
     }
 
-    private fun carteTenues(): View {
+    // Carte à interrupteur générique (titre + aide + toggle sur une clé de préférence).
+    private fun carteToggle(titre: String, sous: String, cle: String, defaut: Boolean, onChange: ((Boolean) -> Unit)?): View {
         val col = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             background = fondCarte()
@@ -206,22 +218,22 @@ class ReglagesActivity : Activity() {
         }
         val ligne = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
         ligne.addView(TextView(this).apply {
-            text = "Tenues météo"
+            text = titre
             setTextColor(texte); textSize = 16f; typeface = police(false)
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         })
         ligne.addView(Switch(this).apply {
-            isChecked = prefs.getBoolean("tenues-meteo", true)
+            isChecked = prefs.getBoolean(cle, defaut)
             fun teinteThumb(on: Boolean) { thumbTintList = ColorStateList.valueOf(if (on) accent else Color.parseColor("#9AA7B4")) }
             teinteThumb(isChecked)
             trackTintList = ColorStateList.valueOf(teinte(accent, 0.5f))
             setOnCheckedChangeListener { _, on ->
-                prefs.edit().putBoolean("tenues-meteo", on).apply(); teinteThumb(on)
+                prefs.edit().putBoolean(cle, on).apply(); teinteThumb(on); onChange?.invoke(on)
             }
         })
         col.addView(ligne)
         col.addView(TextView(this).apply {
-            text = "Bonnet, parapluie, lunettes, écharpe — selon la météo en direct."
+            text = sous
             setTextColor(secondaire); textSize = 13f; typeface = police(false)
             setPadding(0, dp(6), 0, 0)
         })

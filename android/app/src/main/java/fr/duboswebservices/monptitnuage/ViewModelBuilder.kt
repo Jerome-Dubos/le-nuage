@@ -147,7 +147,7 @@ class ViewModelBuilder(private val ctx: Context) {
             put("vanne", vanne)
             put("vannes", JSONArray(vannes))
             put("chips", chips)
-            put("agenda", JSONObject.NULL)
+            put("agenda", if (estPosition) Agenda.json(ctx, ton) else JSONObject.NULL)
             put("stats", stats)
             put("heures", heures)
             put("jours", joursArr)
@@ -181,6 +181,16 @@ class ViewModelBuilder(private val ctx: Context) {
         val m = ca.get(Calendar.MONTH) + 1
         val j = ca.get(Calendar.DAY_OF_MONTH)
         val taquin = ton == Ton.TAQUIN
+
+        // Dates spéciales configurables (prioritaires) : anniversaires + confettis.
+        val mmdd = "%02d-%02d".format(m, j)
+        Anniversaires.charge(ctx).firstOrNull { it.date == mmdd }?.let { occ ->
+            val qui = occ.nom.trim()
+            val suffixe = if (qui.isEmpty()) "" else " $qui"
+            return if (taquin) "Joyeux anniversaire$suffixe ! Un an de plus, ça se fête (et ça se charrie). 🎂" to "confettis"
+            else "Joyeux anniversaire$suffixe 🎂 Une journée aussi douce que toi." to "confettis"
+        }
+
         return when {
             m == 12 && (j == 24 || j == 25) -> Pair(
                 if (taquin) "Joyeux Noël. Le Père Noël t'a vu, va falloir t'expliquer."

@@ -74,10 +74,7 @@ class PageMeteoView(private val act: Activity) : FrameLayout(act) {
         applique(ViewModelBuilder(act).json(meteo, ton, nom, estPosition))
     }
 
-    private fun signature(): String {
-        val p = act.getSharedPreferences("nuage", Context.MODE_PRIVATE)
-        return "${p.getString("ton", "taquin")}|${p.getBoolean("tenues-meteo", true)}"
-    }
+    private fun signature(): String = Etat.signature(act)
 
     fun secousse() {
         vibre(28)

@@ -131,10 +131,7 @@ class MainActivity : Activity() {
         (getSystemService(Context.SENSOR_SERVICE) as? SensorManager)?.unregisterListener(secousseListener)
     }
 
-    private fun tonSig(): String {
-        val p = getSharedPreferences("nuage", Context.MODE_PRIVATE)
-        return "${p.getString("ton", "taquin")}|${p.getBoolean("tenues-meteo", true)}"
-    }
+    private fun tonSig(): String = Etat.signature(this)
 
     // ---- localisation ----
     @SuppressLint("MissingPermission")
