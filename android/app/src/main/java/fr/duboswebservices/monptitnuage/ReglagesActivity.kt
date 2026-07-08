@@ -18,34 +18,48 @@ import android.widget.ScrollView
 import android.widget.Switch
 import android.widget.TextView
 
-// Réglages Android (pendant natif de ReglagesView iOS) : caractère du nuage (deux cartes
-// personnages, comme iOS) et tenues météo. Persistés dans les préférences « nuage ».
+// Réglages Android (pendant natif de ReglagesView iOS). L'écran adopte l'AMBIANCE COMPLÈTE
+// du ton choisi : taquin = bleu net & moderne ; doux = crème/ardoise, police manuscrite,
+// cartes aux contours « croquis ». Le changement de ton re-thème l'écran en direct.
 class ReglagesActivity : Activity() {
 
     private val prefs by lazy { getSharedPreferences("nuage", Context.MODE_PRIVATE) }
 
     private var nuit = false
+    private var estDoux = false
     private var fond = 0; private var carte = 0; private var texte = 0
-    private var secondaire = 0; private var separateur = 0
+    private var secondaire = 0; private var separateur = 0; private var trait = 0
+    private var accent = 0
 
-    private val accentTaquin = "#5B86C4"
-    private val accentDoux = "#E0A0B4"
-    private val accentBleu = Color.parseColor("#4C86C6")
+    private val accentTaquin = Color.parseColor("#5B86C4")
+    private val accentDoux = Color.parseColor("#E0A0B4")
 
-    private var tonChoisi = "taquin"
     private var carteTaquin: LinearLayout? = null
     private var carteDoux: LinearLayout? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        estDoux = prefs.getString("ton", "taquin") == "doux"
         nuit = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
             Configuration.UI_MODE_NIGHT_YES
-        fond = if (nuit) Color.parseColor("#1E2935") else Color.parseColor("#F2F7FC")
-        carte = if (nuit) Color.parseColor("#28374C") else Color.parseColor("#FFFFFF")
-        texte = if (nuit) Color.parseColor("#EAF1F9") else Color.parseColor("#33414F")
-        secondaire = if (nuit) Color.parseColor("#9FB0C0") else Color.parseColor("#7A8794")
-        separateur = if (nuit) Color.parseColor("#33FFFFFF") else Color.parseColor("#14000000")
+        accent = if (estDoux) accentDoux else accentTaquin
+
+        if (estDoux) {
+            fond = if (nuit) Color.parseColor("#28241F") else Color.parseColor("#FBF3E6")
+            carte = if (nuit) Color.parseColor("#34302A") else Color.parseColor("#FFFDF8")
+            texte = if (nuit) Color.parseColor("#F4E9D8") else Color.parseColor("#5A4640")
+            secondaire = if (nuit) Color.parseColor("#B5A99A") else Color.parseColor("#9A857C")
+            trait = if (nuit) Color.parseColor("#52F4E9D8") else Color.parseColor("#6B5A4640")
+            separateur = trait
+        } else {
+            fond = if (nuit) Color.parseColor("#1E2935") else Color.parseColor("#F2F7FC")
+            carte = if (nuit) Color.parseColor("#28374C") else Color.parseColor("#FFFFFF")
+            texte = if (nuit) Color.parseColor("#EAF1F9") else Color.parseColor("#33414F")
+            secondaire = if (nuit) Color.parseColor("#9FB0C0") else Color.parseColor("#7A8794")
+            separateur = if (nuit) Color.parseColor("#33FFFFFF") else Color.parseColor("#14000000")
+            trait = separateur
+        }
 
         val racine = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -63,12 +77,18 @@ class ReglagesActivity : Activity() {
         contenu.addView(carteTenues())
         contenu.addView(TextView(this).apply {
             text = "D'autres réglages arriveront avec les prochaines fonctionnalités."
-            setTextColor(secondaire); textSize = 12f
+            setTextColor(secondaire); textSize = 12f; typeface = police(false)
             setPadding(dp(6), dp(18), dp(6), 0)
         })
 
         racine.addView(ScrollView(this).apply { addView(contenu) })
         setContentView(racine)
+    }
+
+    // Police : manuscrite (cursive) pour le doux, arrondie système pour le taquin.
+    private fun police(gras: Boolean): Typeface {
+        val style = if (gras) Typeface.BOLD else Typeface.NORMAL
+        return if (estDoux) Typeface.create("cursive", style) else Typeface.create(Typeface.DEFAULT, style)
     }
 
     private fun barreTitre(): View {
@@ -84,58 +104,67 @@ class ReglagesActivity : Activity() {
             setOnClickListener { finish() }
         })
         barre.addView(TextView(this).apply {
-            text = "Réglages"; textSize = 24f; setTextColor(texte)
-            setTypeface(typeface, Typeface.BOLD)
+            text = "Réglages"; textSize = if (estDoux) 26f else 24f; setTextColor(texte)
+            typeface = police(true)
         })
         return barre
     }
 
     private fun entete(t: String) = TextView(this).apply {
         text = t.uppercase(); setTextColor(secondaire); textSize = 12f
-        letterSpacing = 0.08f
+        letterSpacing = 0.08f; typeface = police(false)
         setPadding(dp(6), dp(20), dp(6), dp(8))
     }
 
-    // Sélecteur de ton : deux cartes personnages côte à côte (comme iOS).
+    // Contours de carte : arrondis irréguliers + trait dessiné pour le doux (croquis).
+    private fun fondCarte(): GradientDrawable = GradientDrawable().apply {
+        setColor(carte)
+        if (estDoux) {
+            val g = dp(24).toFloat(); val p = dp(8).toFloat()
+            cornerRadii = floatArrayOf(g, g, p, p, g, g, p, p)
+            setStroke(dp(2), trait)
+        } else {
+            cornerRadius = dp(18).toFloat()
+            setStroke(dp(1), separateur)
+        }
+    }
+
+    // Sélecteur de ton : deux cartes personnages côte à côte.
     private fun carteCaractere(): View {
-        tonChoisi = prefs.getString("ton", "taquin") ?: "taquin"
         val rang = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        carteTaquin = carteTon("radieux_taquin.png", "Taquin", "Tendre, mais un peu piquant") { choisir("taquin") }
-        carteDoux = carteTon("radieux_doux.png", "Doux", "Tout doux et bienveillant") { choisir("doux") }
+        carteTaquin = carteTon("radieux_taquin.png", "Taquin", "Tendre, mais un peu piquant", accentTaquin, !estDoux) { choisir("taquin") }
+        carteDoux = carteTon("radieux_doux.png", "Doux", "Tout doux et bienveillant", accentDoux, estDoux) { choisir("doux") }
         rang.addView(carteTaquin, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
             .apply { marginEnd = dp(6) })
         rang.addView(carteDoux, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
             .apply { marginStart = dp(6) })
-        rafraichitCartes()
         return rang
     }
 
+    // Changer de ton re-thème tout l'écran (ambiance complète) → on recrée l'activité.
     private fun choisir(ton: String) {
-        tonChoisi = ton
+        if (prefs.getString("ton", "taquin") == ton) return
         prefs.edit().putString("ton", ton).apply()
-        rafraichitCartes()
+        recreate()
     }
 
-    private fun rafraichitCartes() {
-        carteTaquin?.background = fondCarteTon(tonChoisi == "taquin", accentTaquin)
-        carteDoux?.background = fondCarteTon(tonChoisi == "doux", accentDoux)
-    }
-
-    private fun fondCarteTon(selectionne: Boolean, accentHex: String): GradientDrawable {
-        val a = Color.parseColor(accentHex)
-        return GradientDrawable().apply {
-            cornerRadius = dp(18).toFloat()
-            setColor(if (selectionne) teinte(a, if (nuit) 0.22f else 0.12f) else carte)
-            setStroke(dp(if (selectionne) 2 else 1), if (selectionne) a else separateur)
-        }
-    }
-
-    private fun carteTon(image: String, titre: String, desc: String, onClick: () -> Unit): LinearLayout {
+    private fun carteTon(image: String, titre: String, desc: String, acc: Int, selectionne: Boolean, onClick: () -> Unit): LinearLayout {
         val col = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
             setPadding(dp(12), dp(16), dp(12), dp(14))
             isClickable = true; isFocusable = true
+            background = GradientDrawable().apply {
+                setColor(if (selectionne) teinte(acc, if (nuit) 0.22f else 0.12f) else carte)
+                if (estDoux) {
+                    val g = dp(24).toFloat(); val p = dp(8).toFloat()
+                    cornerRadii = floatArrayOf(g, g, p, p, g, g, p, p)
+                    setStroke(dp(2), if (selectionne) acc else trait)
+                } else {
+                    cornerRadius = dp(18).toFloat()
+                    setStroke(dp(if (selectionne) 2 else 1), if (selectionne) acc else separateur)
+                }
+            }
             setOnClickListener { onClick() }
         }
         val bmp = try { assets.open("personas/$image").use { BitmapFactory.decodeStream(it) } } catch (e: Exception) { null }
@@ -146,33 +175,32 @@ class ReglagesActivity : Activity() {
         })
         col.addView(TextView(this).apply {
             text = titre; setTextColor(texte); textSize = 16f
-            setTypeface(typeface, Typeface.BOLD); setPadding(0, dp(8), 0, 0)
+            typeface = police(true); setPadding(0, dp(8), 0, 0)
         })
         col.addView(TextView(this).apply {
             text = desc; setTextColor(secondaire); textSize = 12f
-            gravity = Gravity.CENTER; setPadding(0, dp(3), 0, 0)
+            gravity = Gravity.CENTER; typeface = police(false); setPadding(0, dp(3), 0, 0)
         })
         return col
     }
 
-    // Carte « tenues météo » : libellé + interrupteur + aide.
     private fun carteTenues(): View {
         val col = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = GradientDrawable().apply { cornerRadius = dp(18).toFloat(); setColor(carte) }
+            background = fondCarte()
             setPadding(dp(16), dp(14), dp(16), dp(14))
         }
         val ligne = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
         ligne.addView(TextView(this).apply {
             text = "Tenues météo"
-            setTextColor(texte); textSize = 16f
+            setTextColor(texte); textSize = 16f; typeface = police(false)
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         })
         ligne.addView(Switch(this).apply {
             isChecked = prefs.getBoolean("tenues-meteo", true)
-            fun teinteThumb(on: Boolean) { thumbTintList = ColorStateList.valueOf(if (on) accentBleu else Color.parseColor("#9AA7B4")) }
+            fun teinteThumb(on: Boolean) { thumbTintList = ColorStateList.valueOf(if (on) accent else Color.parseColor("#9AA7B4")) }
             teinteThumb(isChecked)
-            trackTintList = ColorStateList.valueOf(Color.parseColor("#804C86C6"))
+            trackTintList = ColorStateList.valueOf(teinte(accent, 0.5f))
             setOnCheckedChangeListener { _, on ->
                 prefs.edit().putBoolean("tenues-meteo", on).apply(); teinteThumb(on)
             }
@@ -180,17 +208,17 @@ class ReglagesActivity : Activity() {
         col.addView(ligne)
         col.addView(TextView(this).apply {
             text = "Bonnet, parapluie, lunettes, écharpe — selon la météo en direct."
-            setTextColor(secondaire); textSize = 13f
+            setTextColor(secondaire); textSize = 13f; typeface = police(false)
             setPadding(0, dp(6), 0, 0)
         })
         return col
     }
 
-    // Mélange un accent avec le fond de carte à une opacité donnée (état sélectionné).
-    private fun teinte(accent: Int, alpha: Float): Int {
-        val r = (Color.red(accent) * alpha + Color.red(carte) * (1 - alpha)).toInt()
-        val g = (Color.green(accent) * alpha + Color.green(carte) * (1 - alpha)).toInt()
-        val b = (Color.blue(accent) * alpha + Color.blue(carte) * (1 - alpha)).toInt()
+    // Mélange un accent avec le fond de carte à une opacité donnée.
+    private fun teinte(a: Int, alpha: Float): Int {
+        val r = (Color.red(a) * alpha + Color.red(carte) * (1 - alpha)).toInt()
+        val g = (Color.green(a) * alpha + Color.green(carte) * (1 - alpha)).toInt()
+        val b = (Color.blue(a) * alpha + Color.blue(carte) * (1 - alpha)).toInt()
         return Color.rgb(r, g, b)
     }
 
