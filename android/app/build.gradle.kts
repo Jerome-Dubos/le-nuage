@@ -3,6 +3,21 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+// Assets natifs partagés avec l'iOS (nuages SVG + banques de vannes). Copiés depuis la
+// racine du repo → source unique, pas de duplication versionnée. Bundlés sous assets/.
+val partageDir = layout.buildDirectory.dir("generated/partageAssets")
+val copiePartage = tasks.register<Copy>("copiePartageAssets") {
+    val repo = rootProject.projectDir.parentFile
+    from("$repo/svg") { into("svg") }
+    from("$repo/svg-doux") { into("svg-doux") }
+    from("$repo/svg-accessoires") { into("svg-accessoires") }
+    from(repo) { include("vannes-taquines.json", "messages-doux.json") }
+    into(partageDir)
+}
+tasks.withType<com.android.build.gradle.tasks.MergeSourceSetFolders>().configureEach {
+    dependsOn(copiePartage)
+}
+
 android {
     namespace = "fr.duboswebservices.monptitnuage"
     compileSdk = 36
@@ -11,8 +26,8 @@ android {
         applicationId = "fr.duboswebservices.monptitnuage"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1"
+        versionCode = 2
+        versionName = "0.2"
     }
 
     buildTypes {
@@ -32,10 +47,11 @@ android {
         }
     }
 
-    // Le cœur de rendu partagé (web/) est bundlé tel quel comme asset, à la racine du repo.
+    // Cœur de rendu partagé (web/) + assets natifs partagés (générés ci-dessus).
     sourceSets["main"].assets.srcDirs("src/main/assets", "../../web")
+    sourceSets["main"].assets.srcDir(partageDir)
 }
 
 dependencies {
-    // Jalon 1 : volontairement sans dépendance externe (Activity + WebView du framework).
+    // Volontairement sans dépendance externe (framework Android + org.json).
 }
