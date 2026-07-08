@@ -33,6 +33,7 @@ class MainActivity : Activity() {
 
     private lateinit var pager: ViewPager2
     private lateinit var dots: LinearLayout
+    private lateinit var banniere: TextView
     private var adapter: PagerAdapter? = null
 
     private var gpsCoords: Coordonnees? = null
@@ -61,13 +62,26 @@ class MainActivity : Activity() {
             gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
             bottomMargin = (26 * d).toInt()
         })
-        // Remonte les points au-dessus de la barre de navigation système.
+        banniere = TextView(this).apply {
+            visibility = android.view.View.GONE
+            setTextColor(Color.WHITE); textSize = 14f; gravity = Gravity.CENTER
+            setPadding((16 * d).toInt(), (11 * d).toInt(), (16 * d).toInt(), (11 * d).toInt())
+            background = GradientDrawable().apply { cornerRadius = 24 * d; setColor(Color.parseColor("#4C86C6")) }
+            elevation = 8 * d
+        }
+        root.addView(banniere, FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT).apply {
+            gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+            bottomMargin = (60 * d).toInt(); leftMargin = (16 * d).toInt(); rightMargin = (16 * d).toInt()
+        })
+
+        // Remonte points + bandeau au-dessus de la barre de navigation système.
         root.setOnApplyWindowInsetsListener { _, insets ->
             val bas = if (Build.VERSION.SDK_INT >= 30)
                 insets.getInsets(WindowInsets.Type.systemBars()).bottom
             else @Suppress("DEPRECATION") insets.systemWindowInsetBottom
             (dots.layoutParams as FrameLayout.LayoutParams).bottomMargin = bas + (14 * d).toInt()
-            dots.requestLayout()
+            (banniere.layoutParams as FrameLayout.LayoutParams).bottomMargin = bas + (46 * d).toInt()
+            dots.requestLayout(); banniere.requestLayout()
             insets
         }
         setContentView(root)
@@ -75,6 +89,18 @@ class MainActivity : Activity() {
         // (Re)planifie les notifications opt-in (réveil quotidien, alerte pluie).
         Notifs.programmeReveil(this)
         Notifs.programmePluie(this)
+
+        // Recherche de mise à jour (bandeau discret si une version plus récente existe).
+        Thread {
+            val maj = MiseAJour.verifie(this) ?: return@Thread
+            runOnUiThread {
+                banniere.text = "Mise à jour dispo — v${maj.version}  ·  Installer"
+                banniere.visibility = android.view.View.VISIBLE
+                banniere.setOnClickListener {
+                    runCatching { startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(maj.apkUrl))) }
+                }
+            }
+        }.start()
 
         pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) { majDots(adapter?.itemCount ?: 0, position) }
