@@ -84,6 +84,14 @@ class ReglagesActivity : Activity() {
                 requestPermissions(arrayOf(android.Manifest.permission.READ_CALENDAR), 2)
         })
 
+        contenu.addView(entete("Notifications"))
+        contenu.addView(carteReveil())
+        contenu.addView(View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(10)) })
+        contenu.addView(carteToggle("Alerte pluie", "Un avertissement quand la pluie approche dans l'heure.", "alerte-pluie", false) { on ->
+            if (on) demandeNotif()
+            Notifs.programmePluie(this)
+        })
+
         contenu.addView(entete("Dates spéciales"))
         contenu.addView(carteAction("Gérer les dates spéciales  🎂", "Anniversaires et fêtes, célébrés chaque année.") {
             startActivity(Intent(this, DatesActivity::class.java))
@@ -238,6 +246,70 @@ class ReglagesActivity : Activity() {
             setPadding(0, dp(6), 0, 0)
         })
         return col
+    }
+
+    // Carte « réveil » : interrupteur + heure (ouvre un sélecteur d'heure).
+    private fun carteReveil(): View {
+        val col = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL; background = fondCarte()
+            setPadding(dp(16), dp(14), dp(16), dp(14))
+        }
+        val ligne = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
+        ligne.addView(TextView(this).apply {
+            text = "Réveil du nuage"; setTextColor(texte); textSize = 16f; typeface = police(false)
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        })
+        ligne.addView(Switch(this).apply {
+            isChecked = prefs.getBoolean("reveil", false)
+            fun teinteThumb(on: Boolean) { thumbTintList = android.content.res.ColorStateList.valueOf(if (on) accent else Color.parseColor("#9AA7B4")) }
+            teinteThumb(isChecked)
+            trackTintList = android.content.res.ColorStateList.valueOf(teinte(accent, 0.5f))
+            setOnCheckedChangeListener { _, on ->
+                prefs.edit().putBoolean("reveil", on).apply(); teinteThumb(on)
+                if (on) demandeNotif()
+                Notifs.programmeReveil(this@ReglagesActivity)
+            }
+        })
+        col.addView(ligne)
+
+        val heureVal = TextView(this).apply {
+            setTextColor(accent); textSize = 16f; typeface = police(true)
+            text = heureTexte()
+        }
+        val ligneHeure = LinearLayout(this).apply {
+            gravity = Gravity.CENTER_VERTICAL; setPadding(0, dp(12), 0, 0)
+            isClickable = true
+            addView(TextView(this@ReglagesActivity).apply {
+                text = "Heure"; setTextColor(secondaire); textSize = 14f; typeface = police(false)
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            })
+            addView(heureVal)
+            setOnClickListener {
+                val min = prefs.getInt("reveil-heure", 8 * 60)
+                android.app.TimePickerDialog(this@ReglagesActivity, { _, h, m ->
+                    prefs.edit().putInt("reveil-heure", h * 60 + m).apply()
+                    heureVal.text = heureTexte()
+                    Notifs.programmeReveil(this@ReglagesActivity)
+                }, min / 60, min % 60, true).show()
+            }
+        }
+        col.addView(ligneHeure)
+        col.addView(TextView(this).apply {
+            text = "Un petit mot du nuage chaque matin à l'heure choisie."
+            setTextColor(secondaire); textSize = 13f; typeface = police(false); setPadding(0, dp(8), 0, 0)
+        })
+        return col
+    }
+
+    private fun heureTexte(): String {
+        val m = prefs.getInt("reveil-heure", 8 * 60)
+        return "%02d:%02d".format(m / 60, m % 60)
+    }
+
+    private fun demandeNotif() {
+        if (android.os.Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
+            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 3)
     }
 
     // Carte cliquable (action) : titre + sous-texte.

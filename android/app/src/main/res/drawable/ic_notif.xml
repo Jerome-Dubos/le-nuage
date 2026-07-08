@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icône de notification : silhouette de nuage, blanche (teintée par le système). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M19,18H6.5A4.5,4.5 0 0,1 6,9.03 6,6 0,0,1 17.42,8.4 3.8,3.8 0,0,1 19,18Z" />
+</vector>

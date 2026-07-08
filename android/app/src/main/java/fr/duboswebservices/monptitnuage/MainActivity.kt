@@ -72,6 +72,10 @@ class MainActivity : Activity() {
         }
         setContentView(root)
 
+        // (Re)planifie les notifications opt-in (réveil quotidien, alerte pluie).
+        Notifs.programmeReveil(this)
+        Notifs.programmePluie(this)
+
         pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) { majDots(adapter?.itemCount ?: 0, position) }
         })

@@ -26,8 +26,8 @@ android {
         applicationId = "fr.duboswebservices.monptitnuage"
         minSdk = 26
         targetSdk = 36
-        versionCode = 10
-        versionName = "0.10"
+        versionCode = 11
+        versionName = "0.11"
     }
 
     buildTypes {
@@ -55,4 +55,6 @@ android {
 dependencies {
     // ViewPager2 pour le balayage entre pages météo (tire recyclerview + core).
     implementation("androidx.viewpager2:viewpager2:1.1.0")
+    // WorkManager pour le réveil quotidien + l'alerte pluie en arrière-plan.
+    implementation("androidx.work:work-runtime:2.10.0")
 }
