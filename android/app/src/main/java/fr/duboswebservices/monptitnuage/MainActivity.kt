@@ -67,13 +67,15 @@ class MainActivity : Activity() {
         val d = resources.displayMetrics.density
         return TextView(this).apply {
             text = "⚙"
-            textSize = 20f
+            textSize = 19f
             gravity = Gravity.CENTER
-            setTextColor(Color.parseColor("#8894A4"))
+            setTextColor(Color.parseColor("#33414F"))
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
-                setColor(Color.parseColor("#66FFFFFF"))
+                setColor(Color.parseColor("#E8FFFFFF"))
+                setStroke((1 * resources.displayMetrics.density).toInt(), Color.parseColor("#22000000"))
             }
+            elevation = 6 * resources.displayMetrics.density
             val t = (44 * d).toInt()
             layoutParams = FrameLayout.LayoutParams(t, t).apply {
                 gravity = Gravity.TOP or Gravity.END
