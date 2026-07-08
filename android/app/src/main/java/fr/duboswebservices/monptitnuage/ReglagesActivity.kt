@@ -97,6 +97,11 @@ class ReglagesActivity : Activity() {
             startActivity(Intent(this, DatesActivity::class.java))
         })
 
+        contenu.addView(entete("À propos"))
+        contenu.addView(carteAction("Quoi de neuf ?  ✨", "Les nouveautés des dernières mises à jour.") {
+            startActivity(Intent(this, NouveautesActivity::class.java).putExtra("tout", true))
+        })
+
         contenu.addView(entete("Contact & soutien"))
         contenu.addView(carteAction("Proposer une amélioration", "Une idée, un bug ? Écris-moi.") {
             val i = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:contact@duboswebservices.fr"))

@@ -90,6 +90,13 @@ class MainActivity : Activity() {
         Notifs.programmeReveil(this)
         Notifs.programmePluie(this)
 
+        // « Quoi de neuf » : au 1er lancement après une mise à jour.
+        val nouv = Nouveautes.aMontrer(this)
+        if (nouv.isNotEmpty()) {
+            startActivity(Intent(this, NouveautesActivity::class.java)
+                .putStringArrayListExtra("versions", ArrayList(nouv)))
+        }
+
         // Recherche de mise à jour (bandeau discret si une version plus récente existe).
         Thread {
             val maj = MiseAJour.verifie(this) ?: return@Thread
