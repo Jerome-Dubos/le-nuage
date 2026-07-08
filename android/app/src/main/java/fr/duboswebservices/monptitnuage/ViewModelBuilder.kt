@@ -35,7 +35,9 @@ class ViewModelBuilder(private val ctx: Context) {
         val tempInt = Math.round(c.temperature_2m).toInt()
         val etat = Wmo.humeur(c.weather_code, tempInt)
         var nuageSVG = svgInline(etat, nuit, ton)
-        Tenue.pour(c.weather_code, tempInt, Math.round(c.wind_speed_10m).toInt(), c.is_day == 1)?.let {
+        val tenuesActives = ctx.getSharedPreferences("nuage", Context.MODE_PRIVATE)
+            .getBoolean("tenues-meteo", true)
+        Tenue.pour(c.weather_code, tempInt, Math.round(c.wind_speed_10m).toInt(), c.is_day == 1, tenuesActives)?.let {
             nuageSVG = injecteTenue(nuageSVG, it)
         }
         val peutCligner = peutCligner(etat, nuit)

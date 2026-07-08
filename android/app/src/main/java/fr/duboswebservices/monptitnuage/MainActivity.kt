@@ -4,13 +4,18 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.location.Geocoder
 import android.location.LocationManager
 import android.os.Bundle
+import android.view.Gravity
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.FrameLayout
+import android.widget.TextView
 import java.util.Locale
 
 // Écran principal : charge le cœur web partagé, récupère la position, appelle Open-Meteo,
@@ -21,6 +26,11 @@ class MainActivity : Activity() {
     private var pageChargee = false
     private var vmEnAttente: String? = null
     private var erreurDetailEnAttente: String? = null
+
+    // Dernière météo chargée : permet de re-rendre (ton/tenues changés) sans re-télécharger.
+    private var derniereMeteo: Meteo? = null
+    private var derniereLieu = "Ma position"
+    private var dernierSig = ""
 
     // Position de repli si la localisation est indisponible (Paris).
     private val repli = Coordonnees(48.8566, 2.3522)
@@ -42,9 +52,54 @@ class MainActivity : Activity() {
             }
             loadUrl("file:///android_asset/index.html")
         }
-        setContentView(web)
+
+        // WebView plein écran + bouton Réglages flottant (comme les boutons natifs iOS).
+        val cadre = FrameLayout(this)
+        cadre.addView(web, FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        cadre.addView(boutonReglages())
+        setContentView(cadre)
 
         demarre()
+    }
+
+    private fun boutonReglages(): TextView {
+        val d = resources.displayMetrics.density
+        return TextView(this).apply {
+            text = "⚙"
+            textSize = 20f
+            gravity = Gravity.CENTER
+            setTextColor(Color.parseColor("#8894A4"))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(Color.parseColor("#66FFFFFF"))
+            }
+            val t = (44 * d).toInt()
+            layoutParams = FrameLayout.LayoutParams(t, t).apply {
+                gravity = Gravity.TOP or Gravity.END
+                val m = (16 * d).toInt()
+                setMargins(0, (52 * d).toInt(), m, 0)
+            }
+            setOnClickListener { startActivity(Intent(this@MainActivity, ReglagesActivity::class.java)) }
+        }
+    }
+
+    // Re-rend au retour des Réglages si le ton ou les tenues ont changé (sans re-fetch).
+    override fun onResume() {
+        super.onResume()
+        if (derniereMeteo != null && signature() != dernierSig) construitEtRend()
+    }
+
+    private fun signature(): String {
+        val p = getSharedPreferences("nuage", Context.MODE_PRIVATE)
+        return "${p.getString("ton", "taquin")}|${p.getBoolean("tenues-meteo", true)}"
+    }
+
+    private fun construitEtRend() {
+        val meteo = derniereMeteo ?: return
+        val ton = Ton.depuis(getSharedPreferences("nuage", Context.MODE_PRIVATE).getString("ton", null))
+        dernierSig = signature()
+        applique(ViewModelBuilder(this).json(meteo, ton, derniereLieu, true))
     }
 
     private fun demarre() {
@@ -67,10 +122,12 @@ class MainActivity : Activity() {
             try {
                 val coords = positionActuelle() ?: repli
                 val nom = nomLieu(coords)
-                val ton = Ton.depuis(getSharedPreferences("nuage", Context.MODE_PRIVATE).getString("ton", null))
                 val meteo = WeatherService.charge(coords)
-                val vm = ViewModelBuilder(this).json(meteo, ton, nom, true)
-                runOnUiThread { applique(vm) }
+                runOnUiThread {
+                    derniereMeteo = meteo
+                    derniereLieu = nom
+                    construitEtRend()
+                }
             } catch (e: Exception) {
                 val detail = "${e.javaClass.simpleName}: ${e.message ?: ""}"
                 runOnUiThread { afficheErreur(detail) }

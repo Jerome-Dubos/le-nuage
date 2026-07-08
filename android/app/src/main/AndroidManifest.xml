@@ -20,5 +20,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ReglagesActivity"
+            android:exported="false"
+            android:label="Réglages"
+            android:theme="@android:style/Theme.Material.NoActionBar" />
     </application>
 </manifest>
