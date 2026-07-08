@@ -11,7 +11,6 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.Toast
 import java.util.Locale
 
 // Écran principal : charge le cœur web partagé, récupère la position, appelle Open-Meteo,
@@ -21,6 +20,7 @@ class MainActivity : Activity() {
     private lateinit var web: WebView
     private var pageChargee = false
     private var vmEnAttente: String? = null
+    private var erreurDetailEnAttente: String? = null
 
     // Position de repli si la localisation est indisponible (Paris).
     private val repli = Coordonnees(48.8566, 2.3522)
@@ -37,6 +37,7 @@ class MainActivity : Activity() {
                 override fun onPageFinished(view: WebView, url: String?) {
                     pageChargee = true
                     vmEnAttente?.let { rendre(it); vmEnAttente = null }
+                    erreurDetailEnAttente?.let { erreurDetailEnAttente = null; afficheErreur(it) }
                 }
             }
             loadUrl("file:///android_asset/index.html")
@@ -71,9 +72,8 @@ class MainActivity : Activity() {
                 val vm = ViewModelBuilder(this).json(meteo, ton, nom, true)
                 runOnUiThread { applique(vm) }
             } catch (e: Exception) {
-                runOnUiThread {
-                    Toast.makeText(this, "Impossible de joindre la météo.", Toast.LENGTH_LONG).show()
-                }
+                val detail = "${e.javaClass.simpleName}: ${e.message ?: ""}"
+                runOnUiThread { afficheErreur(detail) }
             }
         }.start()
     }
@@ -105,5 +105,17 @@ class MainActivity : Activity() {
 
     private fun rendre(vm: String) {
         web.evaluateJavascript("window.rendre($vm)", null)
+    }
+
+    // Écran d'erreur (météo injoignable) : un nuage + un message + le détail technique
+    // (auto-diagnostic : la capture d'écran suffit à identifier la cause).
+    private fun afficheErreur(detail: String) {
+        if (!pageChargee) { erreurDetailEnAttente = detail; return }
+        val d = detail.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").take(200)
+        val js = """
+          document.body.style.cssText='display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#1E2935;color:#EAF1F9;font-family:-apple-system,sans-serif;text-align:center;padding:30px';
+          document.getElementById('app').innerHTML='<div><div style="font-size:56px">☁️</div><p style="line-height:1.5;font-size:16px">Impossible de joindre la météo.<br>Vérifie ta connexion et rouvre l\'app.</p><p style="opacity:.4;font-size:12px;margin-top:18px">$d</p></div>';
+        """.trimIndent()
+        web.evaluateJavascript(js, null)
     }
 }

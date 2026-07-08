@@ -5,6 +5,7 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.util.Locale
 
 // Réponse Open-Meteo (port de Meteo.swift). Un seul appel couvre tout.
 data class Meteo(
@@ -54,8 +55,9 @@ object WeatherService {
 
     fun charge(coords: Coordonnees): Meteo {
         val q = buildString {
-            append("latitude=").append("%.4f".format(coords.latitude))
-            append("&longitude=").append("%.4f".format(coords.longitude))
+            // Locale.US impératif : sur un appareil FR, "%.4f" mettrait une virgule → URL cassée.
+            append("latitude=").append(String.format(Locale.US, "%.4f", coords.latitude))
+            append("&longitude=").append(String.format(Locale.US, "%.4f", coords.longitude))
             append("&current=").append(enc("temperature_2m,apparent_temperature,weather_code,is_day,precipitation,wind_speed_10m,relative_humidity_2m,wind_gusts_10m,wind_direction_10m,cloud_cover"))
             append("&daily=").append(enc("temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,sunrise,sunset,uv_index_max,daylight_duration,sunshine_duration"))
             append("&hourly=").append(enc("temperature_2m,weather_code,precipitation_probability,visibility"))
