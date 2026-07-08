@@ -154,6 +154,7 @@ class MainActivity : Activity() {
         sm?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.let {
             sm.registerListener(secousseListener, it, SensorManager.SENSOR_DELAY_UI)
         }
+        NuageWidget.rafraichit(this) // met à jour le widget (ton/météo) quand on ouvre l'app
     }
 
     override fun onPause() {
