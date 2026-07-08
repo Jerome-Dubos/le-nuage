@@ -11,7 +11,7 @@ struct PageMeteoVue: View {
     var live: Bool = false  // état du réglage Dynamic Island (relance charge au changement)
     var cal: Bool = false   // état du réglage Agenda commenté (idem)
 
-    @State private var html: String?
+    @State private var vmJSON: String?
     @State private var erreur = false
 
     var body: some View {
@@ -24,8 +24,8 @@ struct PageMeteoVue: View {
 
     @ViewBuilder
     private var contenu: some View {
-        if let html {
-            WebViewContainer(html: html, cap: cap).ignoresSafeArea()
+        if let vmJSON {
+            WebViewContainer(vmJSON: vmJSON, cap: cap).ignoresSafeArea()
         } else if erreur {
             VStack(spacing: 14) {
                 Text("☁️").font(.system(size: 56))
@@ -47,12 +47,12 @@ struct PageMeteoVue: View {
             let m = try await WeatherService.charge(coords: coords)
             // agenda uniquement sur la page GPS et si le réglage est actif
             let agenda = (estPosition && cal) ? await Agenda.duJour() : nil
-            html = HTMLBuilder.build(m, ton: ton, lieu: nom, estPosition: estPosition, agenda: agenda)
+            vmJSON = HTMLBuilder.viewModelJSON(m, ton: ton, lieu: nom, estPosition: estPosition, agenda: agenda)
             erreur = false
             // la Live Activity suit la position GPS (page 0)
             if estPosition { LiveActivite.majDepuis(m, ton: ton) }
         } catch {
-            if html == nil { erreur = true }
+            if vmJSON == nil { erreur = true }
         }
     }
 }

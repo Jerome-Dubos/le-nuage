@@ -19,7 +19,7 @@ schemes:
 
 settings:
   base:
-    MARKETING_VERSION: "1.15"
+    MARKETING_VERSION: "1.16"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.0"
     CODE_SIGN_STYLE: Automatic
@@ -41,6 +41,8 @@ targets:
       - path: svg-doux
         type: folder
       - path: svg-accessoires
+        type: folder
+      - path: web
         type: folder
       - path: vannes-taquines.json
       - path: messages-doux.json

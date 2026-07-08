@@ -1,12 +1,11 @@
 import SwiftUI
 import WebKit
 
-// Pont SwiftUI ↔ WKWebView. Charge le HTML généré, fond transparent (rebond iOS),
-// + deux interactions natives (vague 3) :
-//   - tap sur le nuage → retour haptique (JS poste un message « haptique »)
-//   - secousse de l'appareil → le nuage réagit (nouvelle vanne + frétille + haptique)
+// Pont SwiftUI ↔ WKWebView. Charge le cœur web partagé (web/index.html) une fois, puis
+// pousse le view-model via window.rendre(<json>) à chaque mise à jour (sans recharger).
+// Deux interactions natives : tap sur le nuage → haptique ; secousse → réaction du nuage.
 struct WebViewContainer: UIViewRepresentable {
-    let html: String
+    let vmJSON: String
     var cap: Double = 0
 
     func makeCoordinator() -> Coordinator { Coordinator() }
@@ -18,15 +17,16 @@ struct WebViewContainer: UIViewRepresentable {
         wv.isOpaque = false
         wv.backgroundColor = .clear
         wv.scrollView.backgroundColor = .clear
+        wv.navigationDelegate = context.coordinator
         context.coordinator.webView = wv
+        if let url = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "web") {
+            wv.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+        }
         return wv
     }
 
     func updateUIView(_ wv: WKWebView, context: Context) {
-        if context.coordinator.dernierHTML != html {
-            context.coordinator.dernierHTML = html
-            wv.loadHTMLString(html, baseURL: nil)
-        }
+        context.coordinator.applique(vmJSON)
         // pousse le cap (boussole) sans recharger la page
         let cap = Int(self.cap.rounded())
         if context.coordinator.dernierCap != cap {
@@ -35,16 +35,34 @@ struct WebViewContainer: UIViewRepresentable {
         }
     }
 
-    final class Coordinator: NSObject, WKScriptMessageHandler {
-        var dernierHTML: String?
+    final class Coordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
         var dernierCap: Int?
         weak var webView: WKWebView?
+        private var chargee = false
+        private var vmEnAttente: String?
+        private var dernierVM: String?
         private let leger = UIImpactFeedbackGenerator(style: .light)
 
         override init() {
             super.init()
             NotificationCenter.default.addObserver(
                 self, selector: #selector(secousse), name: .nuageSecoue, object: nil)
+        }
+
+        // Applique un nouveau view-model : direct si la page est chargée, en attente sinon.
+        func applique(_ json: String) {
+            guard json != dernierVM else { return }
+            dernierVM = json
+            if chargee { rendre(json) } else { vmEnAttente = json }
+        }
+
+        private func rendre(_ json: String) {
+            webView?.evaluateJavaScript("window.rendre(\(json))")
+        }
+
+        func webView(_ wv: WKWebView, didFinish navigation: WKNavigation!) {
+            chargee = true
+            if let v = vmEnAttente { vmEnAttente = nil; rendre(v) }
         }
 
         func userContentController(_ uc: WKUserContentController, didReceive message: WKScriptMessage) {
