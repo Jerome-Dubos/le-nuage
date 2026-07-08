@@ -26,8 +26,8 @@ android {
         applicationId = "fr.duboswebservices.monptitnuage"
         minSdk = 26
         targetSdk = 36
-        versionCode = 8
-        versionName = "0.8"
+        versionCode = 9
+        versionName = "0.9"
     }
 
     buildTypes {
@@ -53,5 +53,6 @@ android {
 }
 
 dependencies {
-    // Volontairement sans dépendance externe (framework Android + org.json).
+    // ViewPager2 pour le balayage entre pages météo (tire recyclerview + core).
+    implementation("androidx.viewpager2:viewpager2:1.1.0")
 }

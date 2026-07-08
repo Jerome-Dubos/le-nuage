@@ -29,5 +29,12 @@
             android:exported="false"
             android:label="Réglages"
             android:theme="@android:style/Theme.Material.NoActionBar" />
+
+        <activity
+            android:name=".LieuxActivity"
+            android:exported="false"
+            android:label="Mes lieux"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@android:style/Theme.Material.NoActionBar" />
     </application>
 </manifest>

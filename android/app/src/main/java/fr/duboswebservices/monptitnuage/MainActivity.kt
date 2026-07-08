@@ -14,91 +14,112 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.location.Geocoder
 import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.Vibrator
 import android.view.Gravity
-import android.webkit.JavascriptInterface
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.view.ViewGroup
+import android.view.WindowInsets
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
 import java.util.Locale
 import kotlin.math.sqrt
 
-// Écran principal : charge le cœur web partagé, récupère la position, appelle Open-Meteo,
-// construit le view-model (ViewModelBuilder) et le pousse via window.rendre — comme l'iOS.
+// Écran principal : un ViewPager de pages météo (position GPS + lieux enregistrés), avec
+// deux boutons flottants (ajouter un lieu / réglages) et des points d'indicateur — comme iOS.
 class MainActivity : Activity() {
 
-    private lateinit var web: WebView
-    private var pageChargee = false
-    private var vmEnAttente: String? = null
-    private var erreurDetailEnAttente: String? = null
+    private lateinit var pager: ViewPager2
+    private lateinit var dots: LinearLayout
+    private var adapter: PagerAdapter? = null
 
-    // Dernière météo chargée : permet de re-rendre (ton/tenues changés) sans re-télécharger.
-    private var derniereMeteo: Meteo? = null
-    private var derniereLieu = "Ma position"
-    private var dernierSig = ""
+    private var gpsCoords: Coordonnees? = null
+    private var gpsNom = "Ma position"
+    private var lieux: List<Lieu> = emptyList()
+    private var dernierTonSig = ""
 
-    // Position de repli si la localisation est indisponible (Paris).
     private val repli = Coordonnees(48.8566, 2.3522)
 
-    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        web = WebView(this).apply {
-            setBackgroundColor(Color.TRANSPARENT)
-            settings.javaScriptEnabled = true
-            settings.allowFileAccess = true
-            addJavascriptInterface(Pont(), "NuageAndroid")
-            webViewClient = object : WebViewClient() {
-                override fun onPageFinished(view: WebView, url: String?) {
-                    pageChargee = true
-                    vmEnAttente?.let { rendre(it); vmEnAttente = null }
-                    erreurDetailEnAttente?.let { erreurDetailEnAttente = null; afficheErreur(it) }
-                }
-            }
-            loadUrl("file:///android_asset/index.html")
-        }
+        pager = ViewPager2(this)
+        dots = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER }
 
-        // WebView plein écran + bouton Réglages flottant (comme les boutons natifs iOS).
-        val cadre = FrameLayout(this)
-        cadre.addView(web, FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
-        cadre.addView(boutonReglages())
-        setContentView(cadre)
+        val root = FrameLayout(this)
+        root.addView(pager, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        root.addView(boutonFlottant("＋", Gravity.TOP or Gravity.START) {
+            startActivity(Intent(this, LieuxActivity::class.java))
+        })
+        root.addView(boutonFlottant("⚙", Gravity.TOP or Gravity.END) {
+            startActivity(Intent(this, ReglagesActivity::class.java))
+        })
+        val d = resources.displayMetrics.density
+        root.addView(dots, FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT).apply {
+            gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+            bottomMargin = (26 * d).toInt()
+        })
+        // Remonte les points au-dessus de la barre de navigation système.
+        root.setOnApplyWindowInsetsListener { _, insets ->
+            val bas = if (Build.VERSION.SDK_INT >= 30)
+                insets.getInsets(WindowInsets.Type.systemBars()).bottom
+            else @Suppress("DEPRECATION") insets.systemWindowInsetBottom
+            (dots.layoutParams as FrameLayout.LayoutParams).bottomMargin = bas + (14 * d).toInt()
+            dots.requestLayout()
+            insets
+        }
+        setContentView(root)
+
+        pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) { majDots(adapter?.itemCount ?: 0, position) }
+        })
 
         demarre()
     }
 
-    private fun boutonReglages(): TextView {
-        val d = resources.displayMetrics.density
-        return TextView(this).apply {
-            text = "⚙"
-            textSize = 19f
-            gravity = Gravity.CENTER
-            setTextColor(Color.parseColor("#33414F"))
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor(Color.parseColor("#E8FFFFFF"))
-                setStroke((1 * resources.displayMetrics.density).toInt(), Color.parseColor("#22000000"))
-            }
-            elevation = 6 * resources.displayMetrics.density
-            val t = (44 * d).toInt()
-            layoutParams = FrameLayout.LayoutParams(t, t).apply {
-                gravity = Gravity.TOP or Gravity.END
-                val m = (16 * d).toInt()
-                setMargins(0, (52 * d).toInt(), m, 0)
-            }
-            setOnClickListener { startActivity(Intent(this@MainActivity, ReglagesActivity::class.java)) }
-        }
+    private fun demarre() {
+        val ok = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (ok) chargePosition()
+        else requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION), 1)
     }
 
-    // Re-rend au retour des Réglages si le ton ou les tenues ont changé (sans re-fetch).
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        chargePosition()
+    }
+
+    private fun chargePosition() {
+        Thread {
+            val coords = positionActuelle() ?: repli
+            val nom = nomLieu(coords)
+            runOnUiThread { gpsCoords = coords; gpsNom = nom; construitPager() }
+        }.start()
+    }
+
+    private fun construitPager() {
+        lieux = Lieux.charge(this)
+        val pages = mutableListOf<PageInfo>()
+        pages.add(PageInfo(gpsCoords ?: repli, gpsNom, true))
+        lieux.forEach { pages.add(PageInfo(Coordonnees(it.lat, it.lon), it.nom, false)) }
+
+        val garde = pager.currentItem
+        adapter = PagerAdapter(pages)
+        pager.adapter = adapter
+        pager.offscreenPageLimit = maxOf(1, pages.size)
+        if (garde in pages.indices) pager.setCurrentItem(garde, false)
+        dernierTonSig = tonSig()
+        majDots(pages.size, pager.currentItem)
+    }
+
     override fun onResume() {
         super.onResume()
-        if (derniereMeteo != null && signature() != dernierSig) construitEtRend()
+        val nv = Lieux.charge(this)
+        if (gpsCoords != null && nv != lieux) construitPager()
+        else if (gpsCoords != null && tonSig() != dernierTonSig) {
+            adapter?.rafraichitTon(); dernierTonSig = tonSig()
+        }
         val sm = getSystemService(Context.SENSOR_SERVICE) as? SensorManager
         sm?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.let {
             sm.registerListener(secousseListener, it, SensorManager.SENSOR_DELAY_UI)
@@ -110,115 +131,101 @@ class MainActivity : Activity() {
         (getSystemService(Context.SENSOR_SERVICE) as? SensorManager)?.unregisterListener(secousseListener)
     }
 
-    // Pont JS → natif : retour haptique quand on tape le nuage (window.NuageAndroid.haptique).
-    inner class Pont {
-        @JavascriptInterface
-        fun haptique() = runOnUiThread { vibre(16) }
-    }
-
-    private fun vibre(ms: Long) {
-        val v = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator ?: return
-        if (v.hasVibrator()) v.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE))
-    }
-
-    // Détection de secousse (accéléromètre) → le nuage réagit (nouvelle vanne), comme sur iOS.
-    private var derniereSecousse = 0L
-    private val secousseListener = object : SensorEventListener {
-        override fun onSensorChanged(e: SensorEvent) {
-            val g = sqrt((e.values[0] * e.values[0] + e.values[1] * e.values[1] + e.values[2] * e.values[2]).toDouble()) / SensorManager.GRAVITY_EARTH
-            val maintenant = System.currentTimeMillis()
-            if (g > 2.3 && maintenant - derniereSecousse > 1000) {
-                derniereSecousse = maintenant
-                vibre(28)
-                web.evaluateJavascript("window.secousse && window.secousse()", null)
-            }
-        }
-        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
-    }
-
-    private fun signature(): String {
+    private fun tonSig(): String {
         val p = getSharedPreferences("nuage", Context.MODE_PRIVATE)
         return "${p.getString("ton", "taquin")}|${p.getBoolean("tenues-meteo", true)}"
     }
 
-    private fun construitEtRend() {
-        val meteo = derniereMeteo ?: return
-        val ton = Ton.depuis(getSharedPreferences("nuage", Context.MODE_PRIVATE).getString("ton", null))
-        dernierSig = signature()
-        applique(ViewModelBuilder(this).json(meteo, ton, derniereLieu, true))
-    }
-
-    private fun demarre() {
-        val ok = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) ==
-            PackageManager.PERMISSION_GRANTED
-        if (ok) chargeMeteo()
-        else requestPermissions(
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
-            1
-        )
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        chargeMeteo() // accordé → vraie position ; refusé → repli
-    }
-
-    private fun chargeMeteo() {
-        Thread {
-            try {
-                val coords = positionActuelle() ?: repli
-                val nom = nomLieu(coords)
-                val meteo = WeatherService.charge(coords)
-                runOnUiThread {
-                    derniereMeteo = meteo
-                    derniereLieu = nom
-                    construitEtRend()
-                }
-            } catch (e: Exception) {
-                val detail = "${e.javaClass.simpleName}: ${e.message ?: ""}"
-                runOnUiThread { afficheErreur(detail) }
-            }
-        }.start()
-    }
-
+    // ---- localisation ----
     @SuppressLint("MissingPermission")
     private fun positionActuelle(): Coordonnees? {
-        val ok = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) ==
-            PackageManager.PERMISSION_GRANTED
-        if (!ok) return null
+        if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) return null
         val lm = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
-        val loc = providers.mapNotNull { p -> runCatching { lm.getLastKnownLocation(p) }.getOrNull() }
+        val loc = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
+            .mapNotNull { p -> runCatching { lm.getLastKnownLocation(p) }.getOrNull() }
             .maxByOrNull { it.time }
         return loc?.let { Coordonnees(it.latitude, it.longitude) }
     }
 
     @Suppress("DEPRECATION")
-    private fun nomLieu(coords: Coordonnees): String {
-        return try {
-            val geo = Geocoder(this, Locale.getDefault())
-            val res = geo.getFromLocation(coords.latitude, coords.longitude, 1)
-            res?.firstOrNull()?.let { it.locality ?: it.subAdminArea ?: it.adminArea } ?: "Ma position"
-        } catch (e: Exception) { "Ma position" }
+    private fun nomLieu(coords: Coordonnees): String = try {
+        Geocoder(this, Locale.getDefault()).getFromLocation(coords.latitude, coords.longitude, 1)
+            ?.firstOrNull()?.let { it.locality ?: it.subAdminArea ?: it.adminArea } ?: "Ma position"
+    } catch (e: Exception) { "Ma position" }
+
+    // ---- secousse : le nuage de la page courante réagit ----
+    private var derniereSecousse = 0L
+    private val secousseListener = object : SensorEventListener {
+        override fun onSensorChanged(e: SensorEvent) {
+            val g = sqrt((e.values[0] * e.values[0] + e.values[1] * e.values[1] + e.values[2] * e.values[2]).toDouble()) / SensorManager.GRAVITY_EARTH
+            val t = System.currentTimeMillis()
+            if (g > 2.3 && t - derniereSecousse > 1000) {
+                derniereSecousse = t
+                adapter?.page(pager.currentItem)?.secousse()
+            }
+        }
+        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
     }
 
-    private fun applique(vm: String) {
-        if (pageChargee) rendre(vm) else vmEnAttente = vm
+    // ---- UI : boutons flottants + points ----
+    private fun boutonFlottant(glyphe: String, grav: Int, onClick: () -> Unit): TextView {
+        val d = resources.displayMetrics.density
+        return TextView(this).apply {
+            text = glyphe; textSize = 19f; gravity = Gravity.CENTER
+            setTextColor(Color.parseColor("#33414F"))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(Color.parseColor("#E8FFFFFF"))
+                setStroke((1 * d).toInt(), Color.parseColor("#22000000"))
+            }
+            elevation = 6 * d
+            val t = (44 * d).toInt()
+            layoutParams = FrameLayout.LayoutParams(t, t).apply {
+                gravity = grav
+                topMargin = (52 * d).toInt()
+                val m = (16 * d).toInt(); leftMargin = m; rightMargin = m
+            }
+            setOnClickListener { onClick() }
+        }
     }
 
-    private fun rendre(vm: String) {
-        web.evaluateJavascript("window.rendre($vm)", null)
+    private fun majDots(n: Int, courant: Int) {
+        dots.removeAllViews()
+        if (n <= 1) return
+        val d = resources.displayMetrics.density
+        for (i in 0 until n) {
+            dots.addView(TextView(this).apply {
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(if (i == courant) Color.parseColor("#DDFFFFFF") else Color.parseColor("#55FFFFFF"))
+                }
+                val s = (7 * d).toInt()
+                layoutParams = LinearLayout.LayoutParams(s, s).apply { marginStart = (4 * d).toInt(); marginEnd = (4 * d).toInt() }
+            })
+        }
     }
 
-    // Écran d'erreur (météo injoignable) : un nuage + un message + le détail technique
-    // (auto-diagnostic : la capture d'écran suffit à identifier la cause).
-    private fun afficheErreur(detail: String) {
-        if (!pageChargee) { erreurDetailEnAttente = detail; return }
-        val d = detail.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").take(200)
-        val js = """
-          document.body.style.cssText='display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#1E2935;color:#EAF1F9;font-family:-apple-system,sans-serif;text-align:center;padding:30px';
-          document.getElementById('app').innerHTML='<div><div style="font-size:56px">☁️</div><p style="line-height:1.5;font-size:16px">Impossible de joindre la météo.<br>Vérifie ta connexion et rouvre l\'app.</p><p style="opacity:.4;font-size:12px;margin-top:18px">$d</p></div>';
-        """.trimIndent()
-        web.evaluateJavascript(js, null)
+    // ---- ViewPager ----
+    data class PageInfo(val coords: Coordonnees, val nom: String, val estPosition: Boolean)
+
+    inner class PagerAdapter(private val pages: List<PageInfo>) : RecyclerView.Adapter<PagerAdapter.VH>() {
+        private val vues = HashMap<Int, PageMeteoView>()
+        inner class VH(val page: PageMeteoView) : RecyclerView.ViewHolder(page)
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+            val v = PageMeteoView(this@MainActivity)
+            v.layoutParams = RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.MATCH_PARENT)
+            return VH(v)
+        }
+
+        override fun onBindViewHolder(holder: VH, position: Int) {
+            vues[position] = holder.page
+            val p = pages[position]
+            holder.page.configure(p.coords, p.nom, p.estPosition)
+        }
+
+        override fun getItemCount() = pages.size
+        fun rafraichitTon() = vues.values.forEach { it.rafraichitTon() }
+        fun page(pos: Int) = vues[pos]
     }
 }
