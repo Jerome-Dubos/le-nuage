@@ -8,15 +8,23 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.location.Geocoder
 import android.location.LocationManager
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.view.Gravity
+import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.TextView
 import java.util.Locale
+import kotlin.math.sqrt
 
 // Écran principal : charge le cœur web partagé, récupère la position, appelle Open-Meteo,
 // construit le view-model (ViewModelBuilder) et le pousse via window.rendre — comme l'iOS.
@@ -43,6 +51,7 @@ class MainActivity : Activity() {
             setBackgroundColor(Color.TRANSPARENT)
             settings.javaScriptEnabled = true
             settings.allowFileAccess = true
+            addJavascriptInterface(Pont(), "NuageAndroid")
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(view: WebView, url: String?) {
                     pageChargee = true
@@ -90,6 +99,41 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         if (derniereMeteo != null && signature() != dernierSig) construitEtRend()
+        val sm = getSystemService(Context.SENSOR_SERVICE) as? SensorManager
+        sm?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.let {
+            sm.registerListener(secousseListener, it, SensorManager.SENSOR_DELAY_UI)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        (getSystemService(Context.SENSOR_SERVICE) as? SensorManager)?.unregisterListener(secousseListener)
+    }
+
+    // Pont JS → natif : retour haptique quand on tape le nuage (window.NuageAndroid.haptique).
+    inner class Pont {
+        @JavascriptInterface
+        fun haptique() = runOnUiThread { vibre(16) }
+    }
+
+    private fun vibre(ms: Long) {
+        val v = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator ?: return
+        if (v.hasVibrator()) v.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE))
+    }
+
+    // Détection de secousse (accéléromètre) → le nuage réagit (nouvelle vanne), comme sur iOS.
+    private var derniereSecousse = 0L
+    private val secousseListener = object : SensorEventListener {
+        override fun onSensorChanged(e: SensorEvent) {
+            val g = sqrt((e.values[0] * e.values[0] + e.values[1] * e.values[1] + e.values[2] * e.values[2]).toDouble()) / SensorManager.GRAVITY_EARTH
+            val maintenant = System.currentTimeMillis()
+            if (g > 2.3 && maintenant - derniereSecousse > 1000) {
+                derniereSecousse = maintenant
+                vibre(28)
+                web.evaluateJavascript("window.secousse && window.secousse()", null)
+            }
+        }
+        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
     }
 
     private fun signature(): String {

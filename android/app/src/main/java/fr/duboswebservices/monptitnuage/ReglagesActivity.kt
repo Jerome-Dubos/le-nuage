@@ -2,9 +2,11 @@ package fr.duboswebservices.monptitnuage
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -75,6 +77,18 @@ class ReglagesActivity : Activity() {
         contenu.addView(carteCaractere())
         contenu.addView(entete("Apparence"))
         contenu.addView(carteTenues())
+
+        contenu.addView(entete("Contact & soutien"))
+        contenu.addView(carteAction("Proposer une amélioration", "Une idée, un bug ? Écris-moi.") {
+            val i = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:contact@duboswebservices.fr"))
+            i.putExtra(Intent.EXTRA_SUBJECT, "Mon p'tit nuage — retour")
+            runCatching { startActivity(i) }
+        })
+        contenu.addView(View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(10)) })
+        contenu.addView(carteAction("Soutenir Le Nuage  ☕", "Offrir un café sur Ko-fi.") {
+            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/duboswebservices"))) }
+        })
+
         contenu.addView(TextView(this).apply {
             text = "D'autres réglages arriveront avec les prochaines fonctionnalités."
             setTextColor(secondaire); textSize = 12f; typeface = police(false)
@@ -210,6 +224,25 @@ class ReglagesActivity : Activity() {
             text = "Bonnet, parapluie, lunettes, écharpe — selon la météo en direct."
             setTextColor(secondaire); textSize = 13f; typeface = police(false)
             setPadding(0, dp(6), 0, 0)
+        })
+        return col
+    }
+
+    // Carte cliquable (action) : titre + sous-texte.
+    private fun carteAction(titre: String, sous: String, onClick: () -> Unit): View {
+        val col = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = fondCarte()
+            setPadding(dp(16), dp(14), dp(16), dp(14))
+            isClickable = true; isFocusable = true
+            setOnClickListener { onClick() }
+        }
+        col.addView(TextView(this).apply {
+            text = titre; setTextColor(accent); textSize = 16f; typeface = police(true)
+        })
+        col.addView(TextView(this).apply {
+            text = sous; setTextColor(secondaire); textSize = 13f; typeface = police(false)
+            setPadding(0, dp(4), 0, 0)
         })
         return col
     }

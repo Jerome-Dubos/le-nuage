@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Avant-plan : le nuage, avec la marge de sécurité des icônes adaptatives. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/nuage_fg"
+    android:inset="20%" />
