@@ -86,12 +86,14 @@ object WidgetRender {
     }
 
     private fun rvPourTaille(ctx: Context, mgr: AppWidgetManager, id: Int, d: Donnees): RemoteViews {
-        // Android 12+ : on fournit les trois dispositions, le launcher choisit selon la taille.
+        // Android 12+ : on fournit les dispositions, le launcher choisit selon la taille réelle
+        // (il prend la plus « riche » qui tient). Seuils pensés pour ne jamais rogner :
+        // compact = petit carré ; moyen = large mais court ; grand = assez large ET haut.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             return RemoteViews(mapOf(
                 SizeF(110f, 110f) to petit(ctx, d),
-                SizeF(210f, 110f) to moyen(ctx, d),
-                SizeF(210f, 210f) to grand(ctx, d)
+                SizeF(200f, 110f) to moyen(ctx, d),
+                SizeF(180f, 220f) to grand(ctx, d)
             ))
         }
         // Avant Android 12 : on lit la taille courante et on choisit la disposition.
@@ -99,31 +101,27 @@ object WidgetRender {
         val minW = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 110)
         val maxH = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 110)
         return when {
-            minW >= 200 && maxH >= 200 -> grand(ctx, d)
+            minW >= 180 && maxH >= 200 -> grand(ctx, d)
             minW >= 200 -> moyen(ctx, d)
             else -> petit(ctx, d)
         }
     }
 
-    // --- dispositions ---
+    // --- dispositions --- (chaque binder ne touche QUE les vues présentes dans sa mise en page)
     private fun petit(ctx: Context, d: Donnees) = base(ctx, R.layout.widget_nuage, d).apply {
         setTextViewText(R.id.widget_temp, d.temp)
         setTextViewText(R.id.widget_label, d.label)
-        setTextViewText(R.id.widget_vanne, d.vanne)
         setTextColor(R.id.widget_temp, encre(d.doux))
         setTextColor(R.id.widget_label, encre(d.doux))
-        setTextColor(R.id.widget_vanne, encreVanne(d.doux))
     }
 
     private fun moyen(ctx: Context, d: Donnees) = base(ctx, R.layout.widget_nuage_moyen, d).apply {
         setTextViewText(R.id.widget_temp, d.temp)
         setTextViewText(R.id.widget_label, d.label)
         setTextViewText(R.id.widget_minmax, d.minmax)
-        setTextViewText(R.id.widget_vanne, d.vanne)
         setTextColor(R.id.widget_temp, encre(d.doux))
         setTextColor(R.id.widget_label, encre(d.doux))
         setTextColor(R.id.widget_minmax, encre(d.doux))
-        setTextColor(R.id.widget_vanne, encreVanne(d.doux))
     }
 
     private fun grand(ctx: Context, d: Donnees) = base(ctx, R.layout.widget_nuage_grand, d).apply {
