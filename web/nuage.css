@@ -7,7 +7,8 @@
 
 /* fond : couleur unie sur <html> (peinte au rebond) + calque fixe surdimensionné pour
    le dégradé (background-attachment: fixed cassé sur iOS). */
-html { background-color: var(--fond-bas); min-height: 100%; overscroll-behavior: none; }
+html { background-color: var(--fond-bas); min-height: 100%; overscroll-behavior: none; overflow-x: hidden; }
+body { overflow-x: hidden; }
 body {
   font-family: var(--police);
   background: transparent;
@@ -220,20 +221,20 @@ body.croquis h2 { letter-spacing: .04em; }
 /* La police manuscrite (cursive) a une hauteur d'x plus petite → on remonte les tailles
    en doux pour garder une lecture confortable (surtout sur Android où c'est la cursive
    système qui prend le relais). */
-body.croquis .lieu { font-size: 17px; }
-body.croquis .label { font-size: 19px; }
-body.croquis .ressenti { font-size: 16px; }
-body.croquis .chip { font-size: 15px; }
-body.croquis .vanne { font-size: 17px; }
-body.croquis .card h2 { font-size: 15px; }
-body.croquis .prog-h, body.croquis .prog-t { font-size: 17px; }
-body.croquis .prog-note { font-size: 16px; }
-body.croquis .h-label { font-size: 13px; }
-body.croquis .h-temp { font-size: 17px; }
-body.croquis .h-pluie { font-size: 12px; }
-body.croquis .j-nom { font-size: 17px; }
-body.croquis .j-temps { font-size: 17px; }
-body.croquis .j-pluie { font-size: 13px; }
-body.croquis .s-val { font-size: 18px; }
-body.croquis .s-lbl { font-size: 12px; }
-body.croquis .legende { font-size: 13px; }
+body.croquis .lieu { font-size: 19px; }
+body.croquis .label { font-size: 22px; }
+body.croquis .ressenti { font-size: 18px; }
+body.croquis .chip { font-size: 17px; }
+body.croquis .vanne { font-size: 19px; }
+body.croquis .card h2 { font-size: 17px; }
+body.croquis .prog-h, body.croquis .prog-t { font-size: 19px; }
+body.croquis .prog-note { font-size: 18px; }
+body.croquis .h-label { font-size: 15px; }
+body.croquis .h-temp { font-size: 19px; }
+body.croquis .h-pluie { font-size: 14px; }
+body.croquis .j-nom { font-size: 19px; }
+body.croquis .j-temps { font-size: 19px; }
+body.croquis .j-pluie { font-size: 14px; }
+body.croquis .s-val { font-size: 20px; }
+body.croquis .s-lbl { font-size: 14px; }
+body.croquis .legende { font-size: 15px; }

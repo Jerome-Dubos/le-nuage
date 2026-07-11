@@ -8,11 +8,13 @@
     android:padding="12dp"
     android:background="@drawable/widget_bg">
 
+    <!-- Taille FIXE (pas d'adjustViewBounds) : dans un widget/RemoteViews, adjustViewBounds
+         + wrap_content peut déclencher des re-mesures en boucle sur certains launchers,
+         d'où un rafraîchissement/clignotement permanent. -->
     <ImageView
         android:id="@+id/widget_nuage"
-        android:layout_width="wrap_content"
-        android:layout_height="60dp"
-        android:adjustViewBounds="true"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:scaleType="fitCenter"
         android:src="@drawable/nuage_taquin_radieux"
         android:contentDescription="@null" />
