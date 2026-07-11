@@ -107,9 +107,15 @@ class LieuxActivity : Activity() {
             typeface = police(false)
             background = fondCarte()
             setPadding(dp(16), dp(14), dp(16), dp(14))
+            // Champ mono-ligne : la touche Entrée déclenche la recherche au lieu d'insérer
+            // un saut de ligne (sans TYPE_CLASS_TEXT le champ est multiligne par défaut).
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS
             imeOptions = EditorInfo.IME_ACTION_SEARCH
             maxLines = 1
-            setOnEditorActionListener { _, _, _ -> lance(text.toString()); true }
+            setOnEditorActionListener { _, _, _ ->
+                cacheClavier(this)
+                lance(text.toString()); true
+            }
         }
         return champ
     }
@@ -175,6 +181,11 @@ class LieuxActivity : Activity() {
             })
             maListe.addView(ligne)
         }
+    }
+
+    private fun cacheClavier(v: View) {
+        (getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager)
+            ?.hideSoftInputFromWindow(v.windowToken, 0)
     }
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()

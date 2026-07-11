@@ -101,6 +101,8 @@ class ReglagesActivity : Activity() {
         contenu.addView(carteAction("Quoi de neuf ?  ✨", "Les nouveautés des dernières mises à jour.") {
             startActivity(Intent(this, NouveautesActivity::class.java).putExtra("tout", true))
         })
+        contenu.addView(View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(10)) })
+        contenu.addView(carteMaj())
 
         contenu.addView(entete("Contact & soutien"))
         contenu.addView(carteAction("Proposer une amélioration", "Une idée, un bug ? Écris-moi.") {
@@ -333,6 +335,40 @@ class ReglagesActivity : Activity() {
             text = sous; setTextColor(secondaire); textSize = 13f; typeface = police(false)
             setPadding(0, dp(4), 0, 0)
         })
+        return col
+    }
+
+    // Carte « mise à jour » : version installée + recherche manuelle (GitHub Releases).
+    private fun carteMaj(): View {
+        val col = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL; background = fondCarte()
+            setPadding(dp(16), dp(14), dp(16), dp(14))
+            isClickable = true; isFocusable = true
+        }
+        val titre = TextView(this).apply {
+            text = "Rechercher une mise à jour"; setTextColor(accent); textSize = 16f; typeface = police(true)
+        }
+        val sous = TextView(this).apply {
+            text = "Version installée : ${MiseAJour.versionActuelle(this@ReglagesActivity)}"
+            setTextColor(secondaire); textSize = 13f; typeface = police(false); setPadding(0, dp(4), 0, 0)
+        }
+        col.addView(titre); col.addView(sous)
+        col.setOnClickListener {
+            sous.text = "Recherche en cours…"
+            Thread {
+                val maj = MiseAJour.verifie(this)
+                runOnUiThread {
+                    if (maj != null) {
+                        sous.text = "Nouvelle version v${maj.version} — appuie pour installer."
+                        col.setOnClickListener {
+                            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(maj.apkUrl))) }
+                        }
+                    } else {
+                        sous.text = "Tu es à jour (v${MiseAJour.versionActuelle(this)}). ☁️"
+                    }
+                }
+            }.start()
+        }
         return col
     }
 

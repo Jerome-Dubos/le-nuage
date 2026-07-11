@@ -119,6 +119,8 @@ class DatesActivity : Activity() {
             setText(a.nom); hint = "Nom (ex. Maman)"
             setHintTextColor(secondaire); setTextColor(texte); textSize = 15f; typeface = police(false)
             background = null; maxLines = 1
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS
+            imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_DONE
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
             addTextChangedListener(object : TextWatcher {
                 override fun afterTextChanged(s: Editable?) { liste[i] = liste[i].copy(nom = s?.toString() ?: ""); sauve() }

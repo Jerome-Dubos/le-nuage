@@ -41,7 +41,11 @@ class WidgetWorker(private val ctx: Context, params: WorkerParameters) : Worker(
         if (ids.isEmpty()) return Result.success()
 
         val coords = derniereePosition() ?: Coordonnees(48.8566, 2.3522)
-        val meteo = try { WeatherService.charge(coords) } catch (e: Exception) { return Result.retry() }
+        // Si la météo échoue (réseau), on retente une fois — mais sans laisser tourner une
+        // boucle : après une tentative, on garde l'état affiché plutôt que de clignoter.
+        val meteo = try { WeatherService.charge(coords) } catch (e: Exception) {
+            return if (runAttemptCount < 1) Result.retry() else Result.success()
+        }
 
         val tonStr = ctx.getSharedPreferences("nuage", Context.MODE_PRIVATE).getString("ton", "taquin") ?: "taquin"
         val ton = Ton.depuis(tonStr)

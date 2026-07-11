@@ -29,6 +29,9 @@ class PageMeteoView(private val act: Activity) : FrameLayout(act) {
 
     init {
         web.setBackgroundColor(Color.TRANSPARENT)
+        // Pas d'effet d'étirement au rebond (Android 12+) : la scène a un fond fixe, l'étirement
+        // déforme le contenu de façon disgracieuse.
+        web.overScrollMode = android.view.View.OVER_SCROLL_NEVER
         web.settings.javaScriptEnabled = true
         web.settings.allowFileAccess = true
         web.addJavascriptInterface(Pont(), "NuageAndroid")
