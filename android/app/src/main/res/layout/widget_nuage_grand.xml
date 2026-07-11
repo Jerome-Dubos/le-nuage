@@ -1,19 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Disposition « grande » (~4×3 et plus) : grande scène, météo détaillée, vanne mise en avant.
-     Mêmes ids que les autres tailles → rendu partagé (WidgetRender). -->
+<!-- Disposition « grande » (~2×3 et plus) : grande scène, météo détaillée, vanne mise en avant.
+     Contenu compact + aligné en haut : sur un format étroit-haut (2×3), tout doit tenir sans
+     que la vanne soit rognée. Mêmes ids que les autres tailles → rendu partagé (WidgetRender). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center"
-    android:padding="16dp"
+    android:gravity="top|center_horizontal"
+    android:paddingLeft="14dp"
+    android:paddingRight="14dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="12dp"
     android:background="@drawable/widget_bg">
 
     <ImageView
         android:id="@+id/widget_nuage"
-        android:layout_width="96dp"
-        android:layout_height="96dp"
+        android:layout_width="76dp"
+        android:layout_height="76dp"
         android:scaleType="fitCenter"
         android:src="@drawable/nuage_taquin_radieux"
         android:contentDescription="@null" />
@@ -22,17 +26,17 @@
         android:id="@+id/widget_temp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="42sp"
+        android:textSize="40sp"
         android:textStyle="bold"
         android:textColor="#33414F"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="2dp"
         android:text="" />
 
     <TextView
         android:id="@+id/widget_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="15sp"
+        android:textSize="14sp"
         android:textColor="#33414F"
         android:maxLines="1"
         android:text="" />
@@ -41,7 +45,7 @@
         android:id="@+id/widget_minmax"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="13sp"
+        android:textSize="12sp"
         android:textColor="#33414F"
         android:layout_marginTop="2dp"
         android:maxLines="1"
@@ -51,12 +55,12 @@
         android:id="@+id/widget_vanne"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="13sp"
+        android:textSize="12sp"
         android:textStyle="italic"
         android:textColor="#4A5A6A"
         android:gravity="center"
-        android:maxLines="3"
+        android:maxLines="2"
         android:ellipsize="end"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="7dp"
         android:text="" />
 </LinearLayout>
