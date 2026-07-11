@@ -47,6 +47,9 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
 
         pager = ViewPager2(this)
+        // Coupe l'étirement horizontal du ViewPager2 (RecyclerView interne) : un scroll un
+        // peu en biais déclenchait sinon un « stretch » qui déformait toute la page météo.
+        (pager.getChildAt(0) as? RecyclerView)?.overScrollMode = android.view.View.OVER_SCROLL_NEVER
         dots = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER }
 
         val root = FrameLayout(this)
@@ -161,7 +164,7 @@ class MainActivity : Activity() {
         sm?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.let {
             sm.registerListener(secousseListener, it, SensorManager.SENSOR_DELAY_UI)
         }
-        NuageWidget.rafraichit(this) // met à jour le widget (ton/météo) quand on ouvre l'app
+        NuageWidget.rafraichit(this, force = true) // rafraîchit vraiment le widget à l'ouverture
     }
 
     override fun onPause() {

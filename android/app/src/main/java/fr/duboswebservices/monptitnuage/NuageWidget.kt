@@ -22,14 +22,24 @@ import java.util.Locale
 // le ton. Rafraîchi périodiquement (updatePeriodMillis) et à l'ajout, via WorkManager.
 class NuageWidget : AppWidgetProvider() {
     override fun onUpdate(ctx: Context, mgr: AppWidgetManager, ids: IntArray) {
-        WorkManager.getInstance(ctx).enqueue(OneTimeWorkRequestBuilder<WidgetWorker>().build())
+        rafraichit(ctx)
     }
 
     companion object {
-        fun rafraichit(ctx: Context) {
+        // Anti-clignotement : certains launchers (Nothing OS notamment) déclenchent onUpdate
+        // en rafale — surtout quand l'app est balayée des récents. Chaque updateAppWidget
+        // ré-inflate le widget (= un flash), d'où le clignotement toutes les ~secondes. On
+        // limite donc un vrai rafraîchissement à 1/minute ; en dessous on ne touche à rien
+        // (le dernier rendu appliqué reste affiché, sans flash). `force` = ouverture de l'app.
+        fun rafraichit(ctx: Context, force: Boolean = false) {
             val ids = AppWidgetManager.getInstance(ctx)
                 .getAppWidgetIds(ComponentName(ctx, NuageWidget::class.java))
-            if (ids.isNotEmpty()) WorkManager.getInstance(ctx).enqueue(OneTimeWorkRequestBuilder<WidgetWorker>().build())
+            if (ids.isEmpty()) return
+            val prefs = ctx.getSharedPreferences("nuage", Context.MODE_PRIVATE)
+            val now = System.currentTimeMillis()
+            if (!force && now - prefs.getLong("widget-maj", 0L) < 60_000L) return
+            prefs.edit().putLong("widget-maj", now).apply()
+            WorkManager.getInstance(ctx).enqueue(OneTimeWorkRequestBuilder<WidgetWorker>().build())
         }
     }
 }
